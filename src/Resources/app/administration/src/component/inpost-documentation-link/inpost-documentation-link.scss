@@ -1,0 +1,13 @@
+.inpost-documentation-link {
+    margin-bottom: 20px;
+    padding: 16px;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+
+    &__button {
+        .sw-icon {
+            margin-right: 8px;
+        }
+    }
+}

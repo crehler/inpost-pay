@@ -1,0 +1,69 @@
+{
+    "inpost-consents-manager": {
+        "title": "InPost Pay Consents",
+        "buttons": {
+            "add": "Add Consent",
+            "edit": "Edit",
+            "delete": "Delete",
+            "enable": "Enable",
+            "disable": "Disable",
+            "save": "Save",
+            "cancel": "Cancel"
+        },
+        "columns": {
+            "id": "ID",
+            "requirementType": "Requirement Type",
+            "status": "Status"
+        },
+        "requirementTypes": {
+            "requiredOnce": "Required Once",
+            "requiredAlways": "Always Required",
+            "optional": "Optional"
+        },
+        "linkTypes": {
+            "cmsPage": "CMS Page",
+            "category": "Category",
+            "external": "External URL"
+        },
+        "fields": {
+            "id": "Consent ID",
+            "requirementType": "Requirement Type",
+            "version": "Version",
+            "enabled": "Enabled",
+            "linkType": "Link Type",
+            "cmsPage": "CMS Page",
+            "category": "Category",
+            "externalLink": "External URL",
+            "description": "Consent Text",
+            "labelLink": "Link Label"
+        },
+        "placeholders": {
+            "id": "e.g. terms, marketing, newsletter",
+            "version": "e.g. 1.0",
+            "cmsPage": "Select CMS page...",
+            "category": "Select category...",
+            "externalLink": "https://example.com/terms",
+            "description": "Enter consent text that will be displayed to the customer...",
+            "labelLink": "e.g. Terms and Conditions"
+        },
+        "modal": {
+            "titleAdd": "Add New Consent",
+            "titleEdit": "Edit Consent",
+            "basicSettings": "Basic Settings",
+            "linkSettings": "Link Settings",
+            "translations": "Translations"
+        },
+        "emptyState": {
+            "text": "No consents"
+        },
+        "messages": {
+            "saveSuccess": "Consent saved successfully",
+            "deleteSuccess": "Consent deleted successfully"
+        },
+        "validation": {
+            "idRequired": "Consent ID is required",
+            "idExists": "Consent with this ID already exists",
+            "descriptionRequired": "At least one translation must have a description"
+        }
+    }
+}

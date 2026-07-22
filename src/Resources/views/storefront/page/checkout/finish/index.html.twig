@@ -1,0 +1,17 @@
+{% sw_extends '@Storefront/storefront/page/checkout/finish/index.html.twig' %}
+
+{% block page_checkout_finish %}
+    {% set inpostPayHandlers = [
+        'Crehler\\InpostPay\\Infrastructure\\Checkout\\InpostPayPaymentHandler',
+        'Crehler\\InpostPay\\Infrastructure\\Checkout\\InpostPayCodPaymentHandler'
+    ] %}
+    {% set isInpostPayOrder = page.order.transactions.first.paymentMethod.handlerIdentifier in inpostPayHandlers %}
+
+    {% if isInpostPayOrder %}
+        <div class="inpost-thank-you-container">
+            <inpost-thank-you></inpost-thank-you>
+        </div>
+    {% endif %}
+
+    {{ parent() }}
+{% endblock %}

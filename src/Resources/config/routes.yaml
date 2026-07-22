@@ -1,0 +1,14 @@
+store-api:
+  resource: '../../Infrastructure/StoreApi'
+  type: attribute
+  exclude: '../../Infrastructure/StoreApi/Abstract*.php'
+
+storefront:
+  resource: '../../Infrastructure/Storefront'
+  type: attribute
+  exclude: '../../Infrastructure/Storefront/Abstract*.php'
+
+api:
+  resource: '../../Infrastructure/Api'
+  type: attribute
+  exclude: '../../Infrastructure/Api/Abstract*.php'

@@ -1,0 +1,64 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+      $logger: '@monolog.logger.crehler_inpostpay'
+      $languageRepository: '@language.repository'
+      $categoryRepository: '@category.repository'
+      $cmsPageRepository: '@cms_page.repository'
+      $salesChannelDomainRepository: '@sales_channel_domain.repository'
+  Crehler\InpostPay\:
+    resource: '../../../src/'
+
+  Crehler\InpostPay\Application\Facade\InpostPayFacadeInterface: '@Crehler\InpostPay\Infrastructure\Facade\InpostPayFacade'
+  Crehler\InpostPay\Infrastructure\StoreApi\Abstract\AbstractBasketBindRoute: '@Crehler\InpostPay\Infrastructure\StoreApi\BasketBindRoute'
+  Crehler\InpostPay\Infrastructure\StoreApi\Abstract\AbstractBindBasketRoute: '@Crehler\InpostPay\Infrastructure\StoreApi\BindBasketRoute'
+
+  Shopware\Core\Checkout\Cart\AbstractCartPersister: '@Shopware\Core\Checkout\Cart\CartPersister'
+  Shopware\Core\System\SalesChannel\Context\SalesChannelContextServiceInterface: '@Shopware\Core\System\SalesChannel\Context\SalesChannelContextService'
+
+  Crehler\InpostPay\Infrastructure\Api\Builder\InpostApiResponseBuilder: null
+
+  Crehler\InpostPay\Application\Handler\Webhook\WebhookHandlerRegistry:
+    arguments:
+      $handlers: !tagged_iterator inpost_pay.webhook_handler
+
+  Crehler\InpostPay\Infrastructure\Persistence\Repository\ShopwareOrderRepository:
+    arguments:
+      $orderRepository: '@order.repository'
+
+  inpost_pay.guzzle.handler_stack:
+    class: GuzzleHttp\HandlerStack
+    factory: [GuzzleHttp\HandlerStack, 'create']
+    calls:
+      - [push, ['@Crehler\InpostPay\Infrastructure\Middleware\LoggingMiddleware']]
+      - [push, ['@Crehler\InpostPay\Infrastructure\Middleware\HeadersMiddleware']]
+
+  inpost_pay.http_client:
+    class: GuzzleHttp\Client
+    arguments:
+      - handler: '@inpost_pay.guzzle.handler_stack'
+        timeout: 30
+        connect_timeout: 10
+        http_errors: false
+
+  GuzzleHttp\ClientInterface: '@inpost_pay.http_client'
+
+  Crehler\InpostPay\Infrastructure\Subscriber\OrderMailRecipientSubscriber:
+    arguments:
+      $orderRepository: '@order.repository'
+
+  Crehler\InpostPay\Infrastructure\Subscriber\OrderUpdateSubscriber:
+    arguments:
+      $orderDeliveryRepository: '@order_delivery.repository'
+
+monolog:
+  channels: [crehler_inpostpay]
+  handlers:
+    crehler_inpostpay:
+      type: rotating_file
+      path: "%kernel.logs_dir%/inpostpay_%kernel.environment%.log"
+      channels: [crehler_inpostpay]
+      max_files: 7
+      level: debug

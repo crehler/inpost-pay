@@ -1,0 +1,19 @@
+{% sw_extends '@Storefront/storefront/layout/meta.html.twig' %}
+
+{% block layout_head_javascript_token %}
+    {{ parent() }}
+
+    {% block layout_head_javascript_inpostpay %}
+        {% if inpostPayConfig %}
+            <script src="{{ inpostPayConfig.scriptUrl }}"></script>
+        {% endif %}
+    {% endblock %}
+{% endblock %}
+
+{% block layout_head_javascript_tracking %}
+    {{ parent() }}
+
+    {% block layout_head_javascript_inpostpay_widget %}
+        {% sw_include "@InpostPay/storefront/component/inpost-pay-widget.html.twig" %}
+    {% endblock %}
+{% endblock %}
