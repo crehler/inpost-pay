@@ -1,0 +1,6 @@
+build:
+  zip:
+    assets:
+      enabled: false
+    composer:
+      enabled: false
