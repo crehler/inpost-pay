@@ -1,0 +1,18 @@
+{% sw_extends '@Storefront/storefront/layout/header/actions/cart-widget.html.twig' %}
+
+{% block layout_header_actions_cart_widget_content %}
+    {{ parent() }}
+
+    {% set displayConfig = inpostPayConfig ? inpostPayConfig.getDisplayConfig('MINICART_PAGE') : null %}
+
+    {% if inpostPayConfig and displayConfig and displayConfig.displayed %}
+        <div class="inpost-pay-widget-container offcanvas-cart-inpost mt-3"
+             style="{{ displayConfig.htmlStyles.toCssString() }}">
+            <inpost-izi-button
+                binding_place="MINICART_PAGE"
+                {% if displayConfig.variation %}variation="{{ displayConfig.variation }}"{% endif %}
+                {% if displayConfig.maxWidthPx %}style="max-width: {{ displayConfig.maxWidthPx }}px"{% endif %}>
+            </inpost-izi-button>
+        </div>
+    {% endif %}
+{% endblock %}

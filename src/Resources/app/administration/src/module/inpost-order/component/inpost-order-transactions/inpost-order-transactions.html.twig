@@ -1,0 +1,109 @@
+<sw-card-view>
+    <sw-card
+        :title="$tc('inpost-order.card.title')"
+        :isLoading="isLoading"
+    >
+        <template v-if="transactions.length === 0 && !isLoading">
+            <sw-empty-state
+                :title="$tc('inpost-order.empty.title')"
+                :subline="$tc('inpost-order.empty.subline')"
+            />
+        </template>
+
+        <template v-else>
+            <sw-data-grid
+                :dataSource="transactions"
+                :columns="transactionColumns"
+                :showSelection="false"
+                :isLoading="isLoading"
+                :showActions="true"
+            >
+                <template #column-amount="{ item }">
+                    {{ formatAmount(item.amount, item.currency) }}
+                </template>
+
+                <template #column-created_date="{ item }">
+                    {{ formatDate(item.created_date) }}
+                </template>
+
+                <template #column-status="{ item }">
+                    <sw-label
+                        :variant="item.status === 'CAPTURED' ? 'success' : 'info'"
+                        appearance="pill"
+                    >
+                        {{ item.status }}
+                    </sw-label>
+                </template>
+
+                <template #actions="{ item }">
+                    <sw-context-menu-item @click="openRefundModal(item)">
+                        {{ $tc('inpost-order.refund.action') }}
+                    </sw-context-menu-item>
+                </template>
+            </sw-data-grid>
+
+            <!-- Operations details -->
+            <template v-for="transaction in transactions">
+                <sw-card
+                    v-if="transaction.operations && transaction.operations.length"
+                    :key="transaction.transaction_id"
+                    :title="$tc('inpost-order.operations.title', { id: transaction.transaction_id })"
+                    class="inpost-operations-card"
+                >
+                    <sw-data-grid
+                        :dataSource="transaction.operations"
+                        :columns="[
+                            { property: 'type', label: $tc('inpost-order.operations.type') },
+                            { property: 'status', label: $tc('inpost-order.operations.status') },
+                            { property: 'amount', label: $tc('inpost-order.operations.amount') },
+                            { property: 'operation_date', label: $tc('inpost-order.operations.date') },
+                        ]"
+                        :showSelection="false"
+                    >
+                        <template #column-amount="{ item }">
+                            {{ formatAmount(item.amount, item.currency) }}
+                        </template>
+                        <template #column-operation_date="{ item }">
+                            {{ formatDate(item.operation_date) }}
+                        </template>
+                    </sw-data-grid>
+                </sw-card>
+            </template>
+        </template>
+    </sw-card>
+
+    <!-- Refund Modal -->
+    <sw-modal
+        v-if="showRefundModal"
+        :title="$tc('inpost-order.refund.modalTitle')"
+        @modal-close="closeRefundModal"
+    >
+        <sw-number-field
+            v-model="refundAmount"
+            :label="$tc('inpost-order.refund.amountLabel')"
+            :min="0.01"
+            :max="selectedTransaction ? selectedTransaction.amount : 0"
+            :digits="2"
+        />
+
+        <sw-text-field
+            v-model="externalRefundId"
+            :label="$tc('inpost-order.refund.externalIdLabel')"
+            :placeholder="$tc('inpost-order.refund.externalIdPlaceholder')"
+        />
+
+        <template #modal-footer>
+            <sw-button @click="closeRefundModal">
+                {{ $tc('inpost-order.refund.cancel') }}
+            </sw-button>
+            <sw-button
+                variant="primary"
+                :isLoading="refundLoading"
+                :disabled="!refundAmount || refundAmount <= 0"
+                @click="submitRefund"
+            >
+                {{ $tc('inpost-order.refund.submit') }}
+            </sw-button>
+        </template>
+    </sw-modal>
+</sw-card-view>

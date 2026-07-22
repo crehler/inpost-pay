@@ -1,0 +1,11 @@
+{% sw_extends '@Storefront/storefront/layout/meta.html.twig' %}
+
+{% block layout_head_javascript_token %}
+    {{ parent() }}
+
+    {% block layout_head_javascript_inpostpay %}
+        {% if inpostPayConfig %}
+            <script src="{{ inpostPayConfig.scriptUrl }}"></script>
+        {% endif %}
+    {% endblock %}
+{% endblock %}

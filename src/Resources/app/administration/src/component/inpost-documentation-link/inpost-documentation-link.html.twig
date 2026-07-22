@@ -1,0 +1,12 @@
+{% block inpost_documentation_link %}
+    <div class="inpost-documentation-link">
+        <sw-button
+            variant="primary"
+            :link="documentationUrl"
+            target="_blank"
+            class="inpost-documentation-link__button">
+            <sw-icon name="regular-external-link" size="16px"></sw-icon>
+            {{ buttonLabel }}
+        </sw-button>
+    </div>
+{% endblock %}

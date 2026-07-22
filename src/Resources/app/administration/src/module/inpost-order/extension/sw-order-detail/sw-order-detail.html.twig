@@ -1,0 +1,11 @@
+{% block sw_order_detail_content_tabs_general %}
+    {% parent %}
+
+    <sw-tabs-item
+        v-if="isInpostPayment"
+        :route="{ name: 'sw.order.detail.inpost', params: { id: $route.params.id } }"
+        :title="$tc('inpost-order.tab.title')"
+    >
+        {{ $tc('inpost-order.tab.title') }}
+    </sw-tabs-item>
+{% endblock %}

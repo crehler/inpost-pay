@@ -1,0 +1,18 @@
+{% sw_extends '@Storefront/storefront/page/product-detail/buy-widget.html.twig' %}
+
+{% block page_product_detail_ordernumber_container %}
+    {% set displayConfig = inpostPayConfig ? inpostPayConfig.getDisplayConfig('PRODUCT_CARD') : null %}
+
+    {% if inpostPayConfig and page.product.id and displayConfig and displayConfig.displayed %}
+        <div class="inpost-pay-widget-container mb-3" style="{{ displayConfig.htmlStyles.toCssString() }}">
+            <inpost-izi-button
+                data-product-id="{{ page.product.id }}"
+                binding_place="PRODUCT_CARD"
+                {% if displayConfig.variation %}variation="{{ displayConfig.variation }}"{% endif %}
+                {% if displayConfig.maxWidthPx %}style="max-width: {{ displayConfig.maxWidthPx }}px"{% endif %}>
+            </inpost-izi-button>
+        </div>
+    {% endif %}
+
+    {{ parent() }}
+{% endblock %}

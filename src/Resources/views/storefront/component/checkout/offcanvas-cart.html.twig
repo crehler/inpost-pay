@@ -1,0 +1,24 @@
+{% sw_extends '@Storefront/storefront/component/checkout/offcanvas-cart.html.twig' %}
+
+{% block component_offcanvas_cart_actions_checkout %}
+    <div class="d-grid">
+        <a href="{{ path('frontend.checkout.confirm.page') }}"
+           class="btn begin-checkout-btn{% if isCartNotEmpty %} btn-primary{% else %} btn-light disabled{% endif %}"
+           title="{{ "checkout.proceedToCheckout"|trans|striptags }}">
+            {{ "checkout.proceedToCheckout"|trans|sw_sanitize }}
+        </a>
+    </div>
+
+    {% set displayConfig = inpostPayConfig ? inpostPayConfig.getDisplayConfig('MINICART_PAGE') : null %}
+
+    {% if inpostPayConfig and displayConfig and displayConfig.displayed %}
+        <div class="inpost-pay-widget-container offcanvas-cart-inpost mt-3"
+             style="{{ displayConfig.htmlStyles.toCssString() }}">
+            <inpost-izi-button
+                binding_place="MINICART_PAGE"
+                {% if displayConfig.variation %}variation="{{ displayConfig.variation }}"{% endif %}
+                {% if displayConfig.maxWidthPx %}style="max-width: {{ displayConfig.maxWidthPx }}px"{% endif %}>
+            </inpost-izi-button>
+        </div>
+    {% endif %}
+{% endblock %}

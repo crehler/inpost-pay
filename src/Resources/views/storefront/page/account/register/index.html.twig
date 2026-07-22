@@ -1,0 +1,9 @@
+{% sw_extends '@Storefront/storefront/page/account/register/index.html.twig' %}
+
+{% block page_account_register_container %}
+    <div class="col-lg-8">
+        {% sw_include '@Storefront/storefront/component/account/register.html.twig' with {
+            'cardTitle': "account.registerPersonalHeader"|trans|sw_sanitize
+        } %}
+    </div>
+{% endblock %}

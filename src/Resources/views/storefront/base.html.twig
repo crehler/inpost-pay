@@ -1,0 +1,10 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{# Init container belongs in <body>: a <div> in <head> makes the browser close <head> early. #}
+{% block base_body_inner %}
+    {% block layout_body_inpostpay_widget %}
+        {% sw_include "@InpostPay/storefront/component/inpost-pay-widget.html.twig" %}
+    {% endblock %}
+
+    {{ parent() }}
+{% endblock %}

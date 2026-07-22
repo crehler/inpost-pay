@@ -1,0 +1,69 @@
+{
+    "inpost-consents-manager": {
+        "title": "InPost Pay Einwilligungen",
+        "buttons": {
+            "add": "Einwilligung hinzufügen",
+            "edit": "Bearbeiten",
+            "delete": "Löschen",
+            "enable": "Aktivieren",
+            "disable": "Deaktivieren",
+            "save": "Speichern",
+            "cancel": "Abbrechen"
+        },
+        "columns": {
+            "id": "ID",
+            "requirementType": "Anforderungstyp",
+            "status": "Status"
+        },
+        "requirementTypes": {
+            "requiredOnce": "Einmalig erforderlich",
+            "requiredAlways": "Immer erforderlich",
+            "optional": "Optional"
+        },
+        "linkTypes": {
+            "cmsPage": "CMS-Seite",
+            "category": "Kategorie",
+            "external": "Externer URL"
+        },
+        "fields": {
+            "id": "Einwilligungs-ID",
+            "requirementType": "Anforderungstyp",
+            "version": "Version",
+            "enabled": "Aktiviert",
+            "linkType": "Link-Typ",
+            "cmsPage": "CMS-Seite",
+            "category": "Kategorie",
+            "externalLink": "Externer URL",
+            "description": "Einwilligungstext",
+            "labelLink": "Link-Beschriftung"
+        },
+        "placeholders": {
+            "id": "z.B. terms, marketing, newsletter",
+            "version": "z.B. 1.0",
+            "cmsPage": "CMS-Seite auswählen...",
+            "category": "Kategorie auswählen...",
+            "externalLink": "https://example.com/agb",
+            "description": "Geben Sie den Einwilligungstext ein, der dem Kunden angezeigt wird...",
+            "labelLink": "z.B. AGB"
+        },
+        "modal": {
+            "titleAdd": "Neue Einwilligung hinzufügen",
+            "titleEdit": "Einwilligung bearbeiten",
+            "basicSettings": "Grundeinstellungen",
+            "linkSettings": "Link-Einstellungen",
+            "translations": "Übersetzungen"
+        },
+        "emptyState": {
+            "text": "Keine Einwilligungen"
+        },
+        "messages": {
+            "saveSuccess": "Einwilligung erfolgreich gespeichert",
+            "deleteSuccess": "Einwilligung erfolgreich gelöscht"
+        },
+        "validation": {
+            "idRequired": "Einwilligungs-ID ist erforderlich",
+            "idExists": "Eine Einwilligung mit dieser ID existiert bereits",
+            "descriptionRequired": "Mindestens eine Übersetzung muss eine Beschreibung haben"
+        }
+    }
+}
