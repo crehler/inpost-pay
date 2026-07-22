@@ -1,0 +1,11 @@
+{
+  "main.js": {
+    "file": "js/inpost-pay.js",
+    "name": "inpost-pay",
+    "src": "main.js",
+    "isEntry": true,
+    "css": [
+      "css/inpost-pay.css"
+    ]
+  }
+}
