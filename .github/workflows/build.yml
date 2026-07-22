@@ -14,6 +14,9 @@ jobs:
   build:
     # Nie uruchamiaj na repo źródłowym — tylko na mirrorze (crehler/inpost).
     if: github.repository != 'crehler-com/InpostPay'
+    # GITHUB_TOKEN mirrora musi moc pushowac tag i tworzyc Release (FoS).
+    permissions:
+      contents: write
     uses: FriendsOfShopware/actions/.github/workflows/github.yml@main
     with:
       extensionName: InpostPay
