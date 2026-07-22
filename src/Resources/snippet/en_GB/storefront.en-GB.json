@@ -1,0 +1,8 @@
+{
+    "inpostPay": {
+        "service": {
+            "cashOnDelivery": "Cash on Delivery",
+            "weekendDelivery": "Weekend Delivery"
+        }
+    }
+}

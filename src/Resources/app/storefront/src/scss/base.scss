@@ -1,0 +1,43 @@
+.offcanvas .inpost-pay-widget-container,
+.offcanvas-cart-inpost {
+    isolation: isolate;
+    position: relative;
+    z-index: 1;
+}
+
+inpost-izi-button {
+    isolation: isolate;
+}
+
+// Fix for InpostPay popup - ensure it's above offcanvas and can receive focus
+#inpostpay-widget-popup {
+    isolation: isolate;
+}
+
+// When InpostPay popup is open, reduce offcanvas visibility interference
+body:has(#inpostpay-widget-popup) .offcanvas.show {
+    visibility: hidden;
+}
+
+// InPost Thank You page component - responsive container
+.inpost-thank-you-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+    margin-bottom: 2rem;
+
+    inpost-thank-you {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+
+        @media (min-width: 768px) {
+            max-width: 500px;
+        }
+
+        @media (min-width: 992px) {
+            max-width: none;
+        }
+    }
+}

@@ -1,0 +1,38 @@
+{
+    "name": "crehler/inpost-pay",
+    "description": "InPost Pay integration",
+    "type": "shopware-platform-plugin",
+    "version": "2.1.0",
+    "authors": [
+        {
+            "name": "Crehler Sp. z o. o.",
+            "email": "support@crehler.com",
+            "homepage": "http://crehler.com",
+            "role": "Developer"
+        }
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+        "shopware/core": "~6.6.0",
+        "league/oauth2-client": "^2.7"
+    },
+    "extra": {
+        "shopware-plugin-class": "Crehler\\InpostPay\\InpostPay",
+        "label": {
+            "de-DE": "InPost Pay",
+            "en-GB": "InPost Pay",
+            "pl-PL": "InPost Pay"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Crehler\\InpostPay\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Crehler/InpostPay\\Tests\\": "tests/"
+        }
+    }
+}

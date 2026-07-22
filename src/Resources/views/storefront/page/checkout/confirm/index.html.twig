@@ -1,0 +1,18 @@
+{% sw_extends '@Storefront/storefront/page/checkout/confirm/index.html.twig' %}
+
+{% block page_checkout_confirm_form_submit %}
+    {% set displayConfig = inpostPayConfig ? inpostPayConfig.getDisplayConfig('CHECKOUT_PAGE') : null %}
+
+    {% if inpostPayConfig and displayConfig and displayConfig.displayed %}
+        <div class="inpost-pay-widget-container checkout-submit-inpost mt-3"
+             style="{{ displayConfig.getHtmlStyles().toCssString() }}">
+            <inpost-izi-button
+                binding_place="CHECKOUT_PAGE"
+                {% if displayConfig.variation %}variation="{{ displayConfig.variation }}"{% endif %}
+                {% if displayConfig.maxWidthPx %}style="max-width: {{ displayConfig.maxWidthPx }}px"{% endif %}>
+            </inpost-izi-button>
+        </div>
+    {% endif %}
+
+    {{ parent() }}
+{% endblock %}

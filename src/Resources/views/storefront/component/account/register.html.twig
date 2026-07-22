@@ -1,0 +1,22 @@
+{% sw_extends '@Storefront/storefront/component/account/register.html.twig' %}
+
+{% block component_account_register_submit %}
+    {% set displayConfig = inpostPayConfig ? inpostPayConfig.getDisplayConfig('REGISTERFORM_PAGE') : null %}
+
+    {% if inpostPayConfig and displayConfig and displayConfig.displayed %}
+        <div class="inpost-pay-widget-container register-submit-inpost mb-2"
+             style="{{ displayConfig.getHtmlStyles().toCssString() }}">
+            <inpost-izi-button
+                binding_place="REGISTERFORM_PAGE"
+                {% if displayConfig.variation %}variation="{{ displayConfig.variation }}"{% endif %}
+                {% if displayConfig.maxWidthPx %}style="max-width: {{ displayConfig.maxWidthPx }}px"{% endif %}>
+            </inpost-izi-button>
+        </div>
+    {% endif %}
+
+    <div class="register-submit d-grid col-md-6 offset-md-6">
+        <button type="submit" class="btn btn-primary btn-lg">
+            {{ "account.registerSubmit"|trans|sw_sanitize }}
+        </button>
+    </div>
+{% endblock %}

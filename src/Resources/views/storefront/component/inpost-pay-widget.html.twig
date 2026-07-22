@@ -1,0 +1,15 @@
+{% if inpostPayConfig %}
+    {% set inpostPayOptions = {
+        merchantClientId: inpostPayConfig.merchantClientId
+    } %}
+
+    {% if inpostPayConfig.basketBindingApiKey is not empty %}
+        {% set inpostPayOptions = inpostPayOptions|merge({basketBindingApiKey: inpostPayConfig.basketBindingApiKey}) %}
+    {% endif %}
+
+    <div class="inpost-pay-widget-container"
+         data-inpost-pay
+         data-inpost-pay-options="{{ inpostPayOptions|json_encode }}"
+         style="display: none">
+    </div>
+{% endif %}
