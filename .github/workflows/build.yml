@@ -2,9 +2,10 @@ name: Build & Release
 
 # Pakuje wtyczke do ZIP i tworzy GitHub Release na publicznym mirrorze.
 # Aktywny TYLKO na mirrorze (guard nizej). Tag = wersja z composer.json,
-# ustawiany jawnie (bez github-tag-action) - dziala niezaleznie dla kazdej
-# linii wydaniowej. Build assetow/composera wylaczony w .shopware-extension.yml
-# (assety sa commitowane), wiec pakowanie nie wymaga Node/PHP.
+# ustawiany jawnie (bez github-tag-action), przypiety do commita buildu
+# (target_commitish) - dziala niezaleznie dla kazdej linii wydaniowej.
+# Build assetow/composera wylaczony w .shopware-extension.yml (assety commitowane),
+# wiec pakowanie nie wymaga Node/PHP.
 on:
   push:
     branches: [master]
@@ -29,10 +30,18 @@ jobs:
       - name: Zbuduj ZIP
         run: shopware-cli extension zip . --disable-git --filename InpostPay.zip
 
+      # Idempotencja: skasuj poprzedni release+tag tej wersji, zeby utworzyc go
+      # na nowo na wlasciwym commicie (softprops nie przesuwa istniejacego tagu).
+      - name: Usun poprzedni release/tag tej wersji
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete "${{ steps.version.outputs.version }}" --repo "${{ github.repository }}" --yes --cleanup-tag || true
+
       - name: Utworz GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: ${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
           files: InpostPay.zip
           fail_on_unmatched_files: true
