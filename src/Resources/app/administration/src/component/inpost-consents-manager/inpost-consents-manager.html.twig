@@ -1,0 +1,181 @@
+{% block inpost_consents_manager %}
+<div class="inpost-consents-manager">
+    <sw-card :title="$tc('inpost-consents-manager.title')" :isLoading="isLoading">
+        <template #toolbar>
+            <sw-button
+                variant="primary"
+                size="small"
+                @click="addConsent">
+                {{ $tc('inpost-consents-manager.buttons.add') }}
+            </sw-button>
+        </template>
+
+        <template v-if="consents.length">
+            <sw-data-grid
+                :dataSource="consents"
+                :columns="columns"
+                :showSelection="false"
+                :showActions="true">
+
+                <template #column-requirementType="{ item }">
+                    <sw-label
+                        :variant="item.requirementType === 'OPTIONAL' ? 'neutral' : 'info'"
+                        size="small"
+                        appearance="pill">
+                        {{ getRequirementTypeLabel(item.requirementType) }}
+                    </sw-label>
+                </template>
+
+                <template #column-enabled="{ item }">
+                    <sw-icon
+                        v-if="item.enabled"
+                        name="regular-checkmark-xs"
+                        color="#37d046"
+                        small>
+                    </sw-icon>
+                    <sw-icon
+                        v-else
+                        name="regular-times-s"
+                        color="#de294c"
+                        small>
+                    </sw-icon>
+                </template>
+
+                <template #actions="{ item }">
+                    <sw-context-menu-item @click="editConsent(item)">
+                        {{ $tc('inpost-consents-manager.buttons.edit') }}
+                    </sw-context-menu-item>
+                    <sw-context-menu-item @click="toggleEnabled(item)">
+                        {{ item.enabled ? $tc('inpost-consents-manager.buttons.disable') : $tc('inpost-consents-manager.buttons.enable') }}
+                    </sw-context-menu-item>
+                    <sw-context-menu-item variant="danger" @click="deleteConsent(item)">
+                        {{ $tc('inpost-consents-manager.buttons.delete') }}
+                    </sw-context-menu-item>
+                </template>
+            </sw-data-grid>
+        </template>
+
+        <template v-else>
+            <p class="inpost-consents-manager__empty-text">
+                {{ $tc('inpost-consents-manager.emptyState.text') }}
+            </p>
+        </template>
+    </sw-card>
+
+    <!-- Edit/Add Modal -->
+    <sw-modal
+        v-if="showModal"
+        :title="currentConsentIndex !== null ? $tc('inpost-consents-manager.modal.titleEdit') : $tc('inpost-consents-manager.modal.titleAdd')"
+        @modal-close="closeModal"
+        variant="large">
+
+        <div class="inpost-consents-manager__modal-content">
+            <!-- Basic Settings -->
+            <sw-card :title="$tc('inpost-consents-manager.modal.basicSettings')">
+                <sw-text-field
+                    v-model:value="currentConsent.id"
+                    :label="$tc('inpost-consents-manager.fields.id')"
+                    :placeholder="$tc('inpost-consents-manager.placeholders.id')"
+                    :disabled="currentConsentIndex !== null"
+                    required>
+                </sw-text-field>
+
+                <sw-single-select
+                    v-model:value="currentConsent.requirementType"
+                    :options="requirementTypes"
+                    :label="$tc('inpost-consents-manager.fields.requirementType')"
+                    labelProperty="label"
+                    valueProperty="value">
+                </sw-single-select>
+
+                <sw-text-field
+                    v-model:value="currentConsent.version"
+                    :label="$tc('inpost-consents-manager.fields.version')"
+                    :placeholder="$tc('inpost-consents-manager.placeholders.version')">
+                </sw-text-field>
+
+                <sw-switch-field
+                    v-model:value="currentConsent.enabled"
+                    :label="$tc('inpost-consents-manager.fields.enabled')">
+                </sw-switch-field>
+            </sw-card>
+
+            <!-- Link Settings -->
+            <sw-card :title="$tc('inpost-consents-manager.modal.linkSettings')">
+                <sw-single-select
+                    v-model:value="currentConsent.linkType"
+                    :options="linkTypes"
+                    :label="$tc('inpost-consents-manager.fields.linkType')"
+                    labelProperty="label"
+                    valueProperty="value">
+                </sw-single-select>
+
+                <sw-entity-single-select
+                    v-if="currentConsent.linkType === 'cms_page'"
+                    v-model:value="currentConsent.cmsPageId"
+                    entity="cms_page"
+                    :criteria="cmsPageCriteria"
+                    :label="$tc('inpost-consents-manager.fields.cmsPage')"
+                    :placeholder="$tc('inpost-consents-manager.placeholders.cmsPage')">
+                </sw-entity-single-select>
+
+                <sw-entity-single-select
+                    v-if="currentConsent.linkType === 'category'"
+                    v-model:value="currentConsent.cmsPageId"
+                    entity="category"
+                    :criteria="categoryCriteria"
+                    :label="$tc('inpost-consents-manager.fields.category')"
+                    :placeholder="$tc('inpost-consents-manager.placeholders.category')">
+                </sw-entity-single-select>
+
+                <sw-text-field
+                    v-if="currentConsent.linkType === 'external'"
+                    v-model:value="currentConsent.externalLink"
+                    :label="$tc('inpost-consents-manager.fields.externalLink')"
+                    :placeholder="$tc('inpost-consents-manager.placeholders.externalLink')">
+                </sw-text-field>
+            </sw-card>
+
+            <!-- Translations -->
+            <sw-card :title="$tc('inpost-consents-manager.modal.translations')">
+                <div class="inpost-consents-manager__locale-buttons">
+                    <sw-button
+                        v-for="locale in availableLocales"
+                        :key="locale"
+                        :variant="activeLocale === locale ? 'primary' : 'ghost'"
+                        size="small"
+                        @click="onLocaleChange(locale)">
+                        {{ locale }}
+                    </sw-button>
+                </div>
+
+                <div class="inpost-consents-manager__translation-fields">
+                    <sw-textarea-field
+                        :value="getCurrentTranslation().description"
+                        @update:value="updateCurrentTranslation('description', $event)"
+                        :label="$tc('inpost-consents-manager.fields.description')"
+                        :placeholder="$tc('inpost-consents-manager.placeholders.description')"
+                        :rows="3">
+                    </sw-textarea-field>
+
+                    <sw-text-field
+                        :value="getCurrentTranslation().labelLink"
+                        @update:value="updateCurrentTranslation('labelLink', $event)"
+                        :label="$tc('inpost-consents-manager.fields.labelLink')"
+                        :placeholder="$tc('inpost-consents-manager.placeholders.labelLink')">
+                    </sw-text-field>
+                </div>
+            </sw-card>
+        </div>
+
+        <template #modal-footer>
+            <sw-button @click="closeModal" size="small">
+                {{ $tc('inpost-consents-manager.buttons.cancel') }}
+            </sw-button>
+            <sw-button variant="primary" size="small" @click="saveConsent">
+                {{ $tc('inpost-consents-manager.buttons.save') }}
+            </sw-button>
+        </template>
+    </sw-modal>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{
+    "inpost-consents-manager": {
+        "title": "Zgody InPost Pay",
+        "buttons": {
+            "add": "Dodaj zgodę",
+            "edit": "Edytuj",
+            "delete": "Usuń",
+            "enable": "Włącz",
+            "disable": "Wyłącz",
+            "save": "Zapisz",
+            "cancel": "Anuluj"
+        },
+        "columns": {
+            "id": "ID",
+            "requirementType": "Typ wymagalności",
+            "status": "Status"
+        },
+        "requirementTypes": {
+            "requiredOnce": "Wymagana raz",
+            "requiredAlways": "Zawsze wymagana",
+            "optional": "Opcjonalna"
+        },
+        "linkTypes": {
+            "cmsPage": "Strona CMS",
+            "category": "Kategoria",
+            "external": "Zewnętrzny URL"
+        },
+        "fields": {
+            "id": "ID zgody",
+            "requirementType": "Typ wymagalności",
+            "version": "Wersja",
+            "enabled": "Aktywna",
+            "linkType": "Typ linku",
+            "cmsPage": "Strona CMS",
+            "category": "Kategoria",
+            "externalLink": "Zewnętrzny URL",
+            "description": "Tekst zgody",
+            "labelLink": "Etykieta linku"
+        },
+        "placeholders": {
+            "id": "np. terms, marketing, newsletter",
+            "version": "np. 1.0",
+            "cmsPage": "Wybierz stronę CMS...",
+            "category": "Wybierz kategorię...",
+            "externalLink": "https://example.com/regulamin",
+            "description": "Wprowadź tekst zgody, który będzie wyświetlany klientowi...",
+            "labelLink": "np. Regulamin"
+        },
+        "modal": {
+            "titleAdd": "Dodaj nową zgodę",
+            "titleEdit": "Edytuj zgodę",
+            "basicSettings": "Ustawienia podstawowe",
+            "linkSettings": "Ustawienia linku",
+            "translations": "Tłumaczenia"
+        },
+        "emptyState": {
+            "text": "Brak zgód"
+        },
+        "messages": {
+            "saveSuccess": "Zgoda została zapisana",
+            "deleteSuccess": "Zgoda została usunięta"
+        },
+        "validation": {
+            "idRequired": "ID zgody jest wymagane",
+            "idExists": "Zgoda o tym ID już istnieje",
+            "descriptionRequired": "Co najmniej jedno tłumaczenie musi zawierać opis"
+        }
+    }
+}

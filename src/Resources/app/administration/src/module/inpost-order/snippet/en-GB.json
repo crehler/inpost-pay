@@ -1,0 +1,46 @@
+{
+    "inpost-order": {
+        "general": {
+            "title": "InPost Pay",
+            "description": "InPost Pay payment details"
+        },
+        "tab": {
+            "title": "Inpost"
+        },
+        "card": {
+            "title": "InPost Pay Transactions"
+        },
+        "columns": {
+            "transactionId": "Transaction ID",
+            "status": "Status",
+            "amount": "Amount",
+            "paymentMethod": "Payment Method",
+            "createdDate": "Created Date"
+        },
+        "operations": {
+            "title": "Operations for {id}",
+            "type": "Type",
+            "status": "Status",
+            "amount": "Amount",
+            "date": "Date"
+        },
+        "empty": {
+            "title": "No transactions",
+            "subline": "No InPost Pay transactions found for this order"
+        },
+        "error": {
+            "loadFailed": "Failed to load InPost Pay transactions"
+        },
+        "refund": {
+            "action": "Request refund",
+            "modalTitle": "Transaction refund",
+            "amountLabel": "Refund amount",
+            "externalIdLabel": "Refund ID (optional)",
+            "externalIdPlaceholder": "e.g. REF-001",
+            "cancel": "Cancel",
+            "submit": "Request refund",
+            "success": "Refund requested successfully",
+            "error": "Failed to request refund"
+        }
+    }
+}

@@ -1,0 +1,34 @@
+.inpost-consents-manager {
+    &__modal-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .sw-card {
+            margin-bottom: 0;
+        }
+    }
+
+    &__locale-buttons {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    &__translation-fields {
+        margin-top: 0;
+    }
+
+    .sw-data-grid {
+        .sw-icon {
+            display: inline-flex;
+        }
+    }
+
+    &__empty-text {
+        padding: 20px;
+        text-align: center;
+        color: #758ca3;
+        margin: 0;
+    }
+}

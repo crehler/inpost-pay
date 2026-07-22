@@ -1,0 +1,25 @@
+{
+  "base": "/bundles/inpostpay/administration/",
+  "entryPoints": {
+    "inpost-pay": {
+      "css": [
+        "/bundles/inpostpay/administration/assets/inpost-pay-CKMFPY5l.css"
+      ],
+      "dynamic": [],
+      "js": [
+        "/bundles/inpostpay/administration/assets/inpost-pay-BqzmW6ie.js"
+      ],
+      "legacy": false,
+      "preload": []
+    }
+  },
+  "legacy": false,
+  "metadatas": {},
+  "version": [
+    "7.1.0",
+    7,
+    1,
+    0
+  ],
+  "viteServer": null
+}

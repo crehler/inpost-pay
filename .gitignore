@@ -1,0 +1,3 @@
+/test-results/
+.phpunit.result.cache
+.DS_Store

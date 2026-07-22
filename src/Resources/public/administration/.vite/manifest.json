@@ -1,0 +1,11 @@
+{
+  "main.js": {
+    "file": "assets/inpost-pay-BqzmW6ie.js",
+    "name": "inpost-pay",
+    "src": "main.js",
+    "isEntry": true,
+    "css": [
+      "assets/inpost-pay-CKMFPY5l.css"
+    ]
+  }
+}

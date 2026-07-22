@@ -1,0 +1,46 @@
+{
+    "inpost-order": {
+        "general": {
+            "title": "InPost Pay",
+            "description": "Szczegóły płatności InPost Pay"
+        },
+        "tab": {
+            "title": "Inpost"
+        },
+        "card": {
+            "title": "Transakcje InPost Pay"
+        },
+        "columns": {
+            "transactionId": "ID Transakcji",
+            "status": "Status",
+            "amount": "Kwota",
+            "paymentMethod": "Metoda płatności",
+            "createdDate": "Data utworzenia"
+        },
+        "operations": {
+            "title": "Operacje dla {id}",
+            "type": "Typ",
+            "status": "Status",
+            "amount": "Kwota",
+            "date": "Data"
+        },
+        "empty": {
+            "title": "Brak transakcji",
+            "subline": "Nie znaleziono transakcji InPost Pay dla tego zamówienia"
+        },
+        "error": {
+            "loadFailed": "Nie udało się pobrać transakcji InPost Pay"
+        },
+        "refund": {
+            "action": "Wykonaj zwrot",
+            "modalTitle": "Zwrot transakcji",
+            "amountLabel": "Kwota zwrotu",
+            "externalIdLabel": "ID zwrotu (opcjonalne)",
+            "externalIdPlaceholder": "np. REF-001",
+            "cancel": "Anuluj",
+            "submit": "Wykonaj zwrot",
+            "success": "Zwrot został zlecony pomyślnie",
+            "error": "Nie udało się wykonać zwrotu"
+        }
+    }
+}

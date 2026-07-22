@@ -1,0 +1,1356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+
+    <card>
+        <title>Basic Configuration</title>
+        <title lang="pl-PL">Konfiguracja podstawowa</title>
+        <title lang="de-DE">Grundkonfiguration</title>
+
+        <component name="inpost-documentation-link">
+            <name>documentationLink</name>
+            <url>https://crehler.atlassian.net/wiki/x/AQCHlgn</url>
+            <label>View Documentation</label>
+            <label lang="pl-PL">Zobacz dokumentację</label>
+            <label lang="de-DE">Dokumentation anzeigen</label>
+        </component>
+
+        <input-field type="checkbox">
+            <name>isSandbox</name>
+            <label>Enable Sandbox Mode</label>
+            <label lang="pl-PL">Włącz tryb testowy</label>
+            <label lang="de-DE">Sandbox-Modus aktivieren</label>
+            <helpText>When enabled, uses the sandbox widget URL for testing. Disable for production.</helpText>
+            <helpText lang="pl-PL">Po włączeniu używa testowego URL widgetu. Wyłącz dla środowiska produkcyjnego.</helpText>
+            <helpText lang="de-DE">Wenn aktiviert, wird die Sandbox-Widget-URL für Tests verwendet. Für den Produktivbetrieb deaktivieren.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>clientId</name>
+            <label>Client ID</label>
+            <label lang="pl-PL">ID klienta</label>
+            <label lang="de-DE">Client-ID</label>
+            <helpText>Your InPostPay Client ID</helpText>
+            <helpText lang="pl-PL">Twój identyfikator klienta InPostPay</helpText>
+            <helpText lang="de-DE">Ihre InPostPay Client-ID</helpText>
+            <placeholder>b73ca9fc-0123-4567-8912-5ac02c6af6e9</placeholder>
+        </input-field>
+
+        <input-field type="password">
+            <name>clientSecret</name>
+            <label>Client Secret</label>
+            <label lang="pl-PL">Sekret klienta</label>
+            <label lang="de-DE">Client-Geheimnis</label>
+            <helpText>Your InPostPay Client Secret (keep it confidential)</helpText>
+            <helpText lang="pl-PL">Twój sekret klienta InPostPay (zachowaj w poufności)</helpText>
+            <helpText lang="de-DE">Ihr InPostPay Client-Geheimnis (vertraulich behandeln)</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>postId</name>
+            <label>POS ID</label>
+            <label lang="pl-PL">ID punktu</label>
+            <label lang="de-DE">Post-ID</label>
+            <helpText>Your InPostPay Post ID</helpText>
+            <helpText lang="pl-PL">Twój identyfikator punktu InPostPay</helpText>
+            <helpText lang="de-DE">Ihre InPostPay Post-ID</helpText>
+            <placeholder>12345678</placeholder>
+        </input-field>
+
+        <input-field type="text">
+            <name>merchantClientId</name>
+            <label>Merchant Client ID</label>
+            <label lang="pl-PL">Merchant Client ID</label>
+            <label lang="de-DE">Händler-Client-ID</label>
+            <helpText>Your InPostPay Merchant Client ID</helpText>
+            <helpText lang="pl-PL">Twój identyfikator Merchant Client InPostPay</helpText>
+            <helpText lang="de-DE">Ihre InPostPay Händler-Client-ID</helpText>
+            <placeholder>b73ca9fc-0123-4567-8912-5ac02c6af6e9</placeholder>
+        </input-field>
+
+        <input-field type="password">
+            <name>merchantSecret</name>
+            <label>Merchant Secret</label>
+            <label lang="pl-PL">Merchant Secret</label>
+            <label lang="de-DE">Händler-Geheimnis</label>
+            <helpText>Your InPostPay Merchant Secret for webhook signature validation (keep it confidential)</helpText>
+            <helpText lang="pl-PL">Twój Merchant Secret InPostPay do walidacji podpisu webhooka (zachowaj w poufności)</helpText>
+            <helpText lang="de-DE">Ihr InPostPay Händler-Geheimnis zur Webhook-Signaturvalidierung (vertraulich behandeln)</helpText>
+        </input-field>
+
+        <input-field type="checkbox">
+            <name>extendedLogging</name>
+            <label>Enable Extended Logging (Debug)</label>
+            <label lang="pl-PL">Włącz rozszerzone logowanie (debug)</label>
+            <label lang="de-DE">Erweiterte Protokollierung aktivieren (Debug)</label>
+            <helpText>When enabled, logs detailed entry-point info (controllers, basket loading) to var/log/inpostpay_*.log. Disable in production.</helpText>
+            <helpText lang="pl-PL">Po włączeniu loguje szczegółowe informacje wejściowe do var/log/inpostpay_*.log. Wyłącz na produkcji.</helpText>
+            <helpText lang="de-DE">Aktiviert detaillierte Eintrittspunkt-Logs in var/log/inpostpay_*.log. In Produktion deaktivieren.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+    </card>
+
+    <card>
+        <title>Payment Methods Configuration</title>
+        <title lang="pl-PL">Konfiguracja metod płatności</title>
+        <title lang="de-DE">Konfiguration der Zahlungsmethoden</title>
+
+        <input-field type="multi-select">
+            <name>enabledPaymentMethods</name>
+            <label>Available Payment Methods</label>
+            <label lang="pl-PL">Dostępne metody płatności</label>
+            <label lang="de-DE">Verfügbare Zahlungsmethoden</label>
+            <helpText>Select which payment methods to offer to customers in the InPost Pay widget</helpText>
+            <helpText lang="pl-PL">Wybierz metody płatności, które mają być dostępne dla klientów w widgecie InPost Pay</helpText>
+            <helpText lang="de-DE">Wählen Sie die Zahlungsmethoden aus, die Kunden im InPost Pay Widget angeboten werden sollen</helpText>
+            <options>
+                <option>
+                    <id>BLIK_CODE</id>
+                    <name>BLIK</name>
+                    <name lang="pl-PL">BLIK</name>
+                    <name lang="de-DE">BLIK</name>
+                </option>
+                <option>
+                    <id>CARD</id>
+                    <name>Credit/Debit Card</name>
+                    <name lang="pl-PL">Karta kredytowa/debetowa</name>
+                    <name lang="de-DE">Kredit-/Debitkarte</name>
+                </option>
+                <option>
+                    <id>CARD_TOKEN</id>
+                    <name>Card Token</name>
+                    <name lang="pl-PL">Token karty</name>
+                    <name lang="de-DE">Karten-Token</name>
+                </option>
+                <option>
+                    <id>GOOGLE_PAY</id>
+                    <name>Google Pay</name>
+                    <name lang="pl-PL">Google Pay</name>
+                    <name lang="de-DE">Google Pay</name>
+                </option>
+                <option>
+                    <id>APPLE_PAY</id>
+                    <name>Apple Pay</name>
+                    <name lang="pl-PL">Apple Pay</name>
+                    <name lang="de-DE">Apple Pay</name>
+                </option>
+                <option>
+                    <id>PAY_BY_LINK</id>
+                    <name>Pay by Link</name>
+                    <name lang="pl-PL">Przelew online</name>
+                    <name lang="de-DE">Pay by Link</name>
+                </option>
+                <option>
+                    <id>SHOPPING_LIMIT</id>
+                    <name>Shopping Limit</name>
+                    <name lang="pl-PL">Limit zakupowy</name>
+                    <name lang="de-DE">Einkaufslimit</name>
+                </option>
+                <option>
+                    <id>DEFERRED_PAYMENT</id>
+                    <name>Deferred Payment</name>
+                    <name lang="pl-PL">Płatność odroczona</name>
+                    <name lang="de-DE">Aufgeschobene Zahlung</name>
+                </option>
+                <option>
+                    <id>CASH_ON_DELIVERY</id>
+                    <name>Cash on Delivery</name>
+                    <name lang="pl-PL">Płatność za pobraniem</name>
+                    <name lang="de-DE">Nachnahme</name>
+                </option>
+            </options>
+            <defaultValue>BLIK_CODE</defaultValue>
+            <defaultValue>CARD</defaultValue>
+            <defaultValue>PAY_BY_LINK</defaultValue>
+        </input-field>
+    </card>
+
+    <!-- Optional Delivery Services Configuration -->
+    <card>
+        <title>Optional Delivery Services</title>
+        <title lang="pl-PL">Opcjonalne uslugi dostawy</title>
+        <title lang="de-DE">Optionale Lieferdienste</title>
+
+        <!-- COD - Cash on Delivery -->
+        <input-field type="checkbox">
+            <name>codServiceEnabled</name>
+            <label>Enable Cash on Delivery (COD)</label>
+            <label lang="pl-PL">Wlacz platnosc przy odbiorze (COD)</label>
+            <label lang="de-DE">Nachnahme aktivieren (COD)</label>
+            <helpText>Allow customers to pay on delivery. Available for APM and Courier.</helpText>
+            <helpText lang="pl-PL">Pozwol klientom placic przy odbiorze. Dostepne dla APM i Kuriera.</helpText>
+            <helpText lang="de-DE">Kunden konnen bei Lieferung bezahlen. Verfugbar fur APM und Kurier.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="checkbox">
+            <name>codSeparatePaymentMethodEnabled</name>
+            <label>Separate payment method for Cash on Delivery orders</label>
+            <label lang="pl-PL">Osobna metoda platnosci dla zamowien za pobraniem</label>
+            <label lang="de-DE">Separate Zahlungsart fur Nachnahme-Bestellungen</label>
+            <helpText>Orders paid with Cash on Delivery get the "InPost Pay - Cash on Delivery" payment method instead of the default one. Useful for ERP integrations that map orders by payment method.</helpText>
+            <helpText lang="pl-PL">Zamowienia za pobraniem otrzymaja metode platnosci "InPost Pay - pobranie" zamiast domyslnej. Przydatne dla integracji ERP mapujacych zamowienia po metodzie platnosci.</helpText>
+            <helpText lang="de-DE">Nachnahme-Bestellungen erhalten die Zahlungsart "InPost Pay - Nachnahme" anstelle der Standardmethode. Nutzlich fur ERP-Integrationen, die Bestellungen nach Zahlungsart zuordnen.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="float">
+            <name>codServiceAdditionalCost</name>
+            <label>COD Additional Cost (PLN gross)</label>
+            <label lang="pl-PL">Dodatkowy koszt COD (PLN brutto)</label>
+            <label lang="de-DE">COD Zusatzkosten (PLN brutto)</label>
+            <helpText>Additional fee for Cash on Delivery in PLN (gross price including VAT)</helpText>
+            <helpText lang="pl-PL">Dodatkowa oplata za pobranie w PLN (cena brutto z VAT)</helpText>
+            <helpText lang="de-DE">Zusatzliche Gebuhr fur Nachnahme in PLN (Bruttopreis inkl. MwSt.)</helpText>
+            <defaultValue>0</defaultValue>
+        </input-field>
+
+        <!-- PWW - Weekend Delivery -->
+        <input-field type="checkbox">
+            <name>pwwServiceEnabled</name>
+            <label>Enable Weekend Delivery (PWW)</label>
+            <label lang="pl-PL">Wlacz dostawe weekendowa (PWW)</label>
+            <label lang="de-DE">Wochenendlieferung aktivieren (PWW)</label>
+            <helpText>Allow weekend delivery option. Available for APM only.</helpText>
+            <helpText lang="pl-PL">Wlacz opcje dostawy weekendowej. Dostepne tylko dla APM.</helpText>
+            <helpText lang="de-DE">Wochenendlieferung aktivieren. Nur fur APM verfugbar.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="float">
+            <name>pwwServiceAdditionalCost</name>
+            <label>PWW Additional Cost (PLN gross)</label>
+            <label lang="pl-PL">Dodatkowy koszt PWW (PLN brutto)</label>
+            <label lang="de-DE">PWW Zusatzkosten (PLN brutto)</label>
+            <helpText>Additional fee for Weekend Delivery in PLN (gross price including VAT)</helpText>
+            <helpText lang="pl-PL">Dodatkowa oplata za dostawe weekendowa w PLN (cena brutto z VAT)</helpText>
+            <helpText lang="de-DE">Zusatzliche Gebuhr fur Wochenendlieferung in PLN (Bruttopreis inkl. MwSt.)</helpText>
+            <defaultValue>0</defaultValue>
+        </input-field>
+
+        <!-- PWW Availability Window - Start -->
+        <input-field type="single-select">
+            <name>pwwServiceAvailabilityStartDay</name>
+            <label>PWW Availability Start Day</label>
+            <label lang="pl-PL">PWW - dzien poczatku dostepnosci</label>
+            <label lang="de-DE">PWW Verfugbarkeit Starttag</label>
+            <helpText>Day of week when Weekend Delivery option becomes available</helpText>
+            <helpText lang="pl-PL">Dzien tygodnia, od ktorego dostepna jest opcja dostawy weekendowej</helpText>
+            <helpText lang="de-DE">Wochentag, ab dem die Wochenendlieferung verfugbar ist</helpText>
+            <options>
+                <option><id>1</id><name>Monday</name><name lang="pl-PL">Poniedzialek</name><name lang="de-DE">Montag</name></option>
+                <option><id>2</id><name>Tuesday</name><name lang="pl-PL">Wtorek</name><name lang="de-DE">Dienstag</name></option>
+                <option><id>3</id><name>Wednesday</name><name lang="pl-PL">Sroda</name><name lang="de-DE">Mittwoch</name></option>
+                <option><id>4</id><name>Thursday</name><name lang="pl-PL">Czwartek</name><name lang="de-DE">Donnerstag</name></option>
+                <option><id>5</id><name>Friday</name><name lang="pl-PL">Piatek</name><name lang="de-DE">Freitag</name></option>
+                <option><id>6</id><name>Saturday</name><name lang="pl-PL">Sobota</name><name lang="de-DE">Samstag</name></option>
+                <option><id>7</id><name>Sunday</name><name lang="pl-PL">Niedziela</name><name lang="de-DE">Sonntag</name></option>
+            </options>
+            <defaultValue>4</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>pwwServiceAvailabilityStartTime</name>
+            <label>PWW Availability Start Time (HH:MM)</label>
+            <label lang="pl-PL">PWW - godzina poczatku (GG:MM)</label>
+            <label lang="de-DE">PWW Verfugbarkeit Startzeit (HH:MM)</label>
+            <helpText>Time when Weekend Delivery becomes available (24h format, e.g., 00:00)</helpText>
+            <helpText lang="pl-PL">Godzina, od ktorej dostepna jest dostawa weekendowa (format 24h, np. 00:00)</helpText>
+            <helpText lang="de-DE">Uhrzeit, ab der die Wochenendlieferung verfugbar ist (24h-Format, z.B. 00:00)</helpText>
+            <placeholder>00:00</placeholder>
+            <defaultValue>00:00</defaultValue>
+        </input-field>
+
+        <!-- PWW Availability Window - End -->
+        <input-field type="single-select">
+            <name>pwwServiceAvailabilityEndDay</name>
+            <label>PWW Availability End Day</label>
+            <label lang="pl-PL">PWW - dzien konca dostepnosci</label>
+            <label lang="de-DE">PWW Verfugbarkeit Endtag</label>
+            <helpText>Day of week when Weekend Delivery option ends</helpText>
+            <helpText lang="pl-PL">Dzien tygodnia, do ktorego dostepna jest opcja dostawy weekendowej</helpText>
+            <helpText lang="de-DE">Wochentag, bis zu dem die Wochenendlieferung verfugbar ist</helpText>
+            <options>
+                <option><id>1</id><name>Monday</name><name lang="pl-PL">Poniedzialek</name><name lang="de-DE">Montag</name></option>
+                <option><id>2</id><name>Tuesday</name><name lang="pl-PL">Wtorek</name><name lang="de-DE">Dienstag</name></option>
+                <option><id>3</id><name>Wednesday</name><name lang="pl-PL">Sroda</name><name lang="de-DE">Mittwoch</name></option>
+                <option><id>4</id><name>Thursday</name><name lang="pl-PL">Czwartek</name><name lang="de-DE">Donnerstag</name></option>
+                <option><id>5</id><name>Friday</name><name lang="pl-PL">Piatek</name><name lang="de-DE">Freitag</name></option>
+                <option><id>6</id><name>Saturday</name><name lang="pl-PL">Sobota</name><name lang="de-DE">Samstag</name></option>
+                <option><id>7</id><name>Sunday</name><name lang="pl-PL">Niedziela</name><name lang="de-DE">Sonntag</name></option>
+            </options>
+            <defaultValue>5</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>pwwServiceAvailabilityEndTime</name>
+            <label>PWW Availability End Time (HH:MM)</label>
+            <label lang="pl-PL">PWW - godzina konca (GG:MM)</label>
+            <label lang="de-DE">PWW Verfugbarkeit Endzeit (HH:MM)</label>
+            <helpText>Time when Weekend Delivery ends (24h format, e.g., 12:00)</helpText>
+            <helpText lang="pl-PL">Godzina, do ktorej dostepna jest dostawa weekendowa (format 24h, np. 12:00)</helpText>
+            <helpText lang="de-DE">Uhrzeit, bis zu der die Wochenendlieferung verfugbar ist (24h-Format, z.B. 12:00)</helpText>
+            <placeholder>12:00</placeholder>
+            <defaultValue>12:00</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title>Delivery Method Mapping</title>
+        <title lang="pl-PL">Mapowanie metod dostawy</title>
+        <title lang="de-DE">Zuordnung der Liefermethoden</title>
+
+        <component name="sw-entity-multi-id-select">
+            <name>apmShippingMethods</name>
+            <entity>shipping_method</entity>
+            <label>APM Methods</label>
+            <label lang="pl-PL">Metody APM (Paczkomat)</label>
+            <label lang="de-DE">APM (Paczkomat) Methoden</label>
+            <helpText>Select Shopware shipping methods that should be mapped to InPost APM</helpText>
+            <helpText lang="pl-PL">Wybierz metody wysyłki Shopware, które powinny być zmapowane do InPost APM</helpText>
+            <helpText lang="de-DE">Wählen Sie die Shopware-Versandmethoden aus, die InPost APM zugeordnet werden sollen</helpText>
+        </component>
+
+        <component name="sw-entity-multi-id-select">
+            <name>courierShippingMethods</name>
+            <entity>shipping_method</entity>
+            <label>Courier Delivery Methods</label>
+            <label lang="pl-PL">Metody dostawy kurierskiej</label>
+            <label lang="de-DE">Kurier-Liefermethoden</label>
+            <helpText>Select Shopware shipping methods that should be mapped to InPost Courier delivery</helpText>
+            <helpText lang="pl-PL">Wybierz metody wysyłki Shopware, które powinny być zmapowane do dostawy kurierskiej InPost</helpText>
+            <helpText lang="de-DE">Wählen Sie die Shopware-Versandmethoden aus, die der InPost Kurierzustellung zugeordnet werden sollen</helpText>
+        </component>
+
+        <component name="sw-entity-multi-id-select">
+            <name>digitalShippingMethods</name>
+            <entity>shipping_method</entity>
+            <label>Digital Delivery Methods</label>
+            <label lang="pl-PL">Metody dostawy cyfrowej</label>
+            <label lang="de-DE">Digitale Liefermethoden</label>
+            <helpText>Select Shopware shipping methods that should be mapped to InPost Digital delivery</helpText>
+            <helpText lang="pl-PL">Wybierz metody wysyłki Shopware, które powinny być zmapowane do dostawy cyfrowej InPost</helpText>
+            <helpText lang="de-DE">Wählen Sie die Shopware-Versandmethoden aus, die der digitalen InPost-Zustellung zugeordnet werden sollen</helpText>
+        </component>
+    </card>
+
+    <!-- Widget Display Configuration - Product Card -->
+    <card>
+        <title>Widget Display - Product Card</title>
+        <title lang="pl-PL">Wyświetlanie widgetu - Karta produktu</title>
+        <title lang="de-DE">Widget-Anzeige - Produktkarte</title>
+
+        <input-field type="checkbox">
+            <name>productCardDisplayed</name>
+            <label>Display the Widget</label>
+            <label lang="pl-PL">Wyświetl widget</label>
+            <label lang="de-DE">Widget anzeigen</label>
+            <helpText>Show InPost Pay widget on product pages</helpText>
+            <helpText lang="pl-PL">Pokaż widget InPost Pay na stronach produktów</helpText>
+            <helpText lang="de-DE">InPost Pay Widget auf Produktseiten anzeigen</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="checkbox">
+            <name>productCardDarkMode</name>
+            <label>Dark Mode</label>
+            <label lang="pl-PL">Tryb ciemny</label>
+            <label lang="de-DE">Dunkelmodus</label>
+            <helpText>Enable dark mode for the widget</helpText>
+            <helpText lang="pl-PL">Włącz tryb ciemny dla widgetu</helpText>
+            <helpText lang="de-DE">Dunkelmodus für das Widget aktivieren</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>productCardVariant</name>
+            <label>Variant</label>
+            <label lang="pl-PL">Wariant</label>
+            <label lang="de-DE">Variante</label>
+            <helpText>Widget color variant</helpText>
+            <helpText lang="pl-PL">Wariant kolorystyczny widgetu</helpText>
+            <helpText lang="de-DE">Farbvariante des Widgets</helpText>
+            <defaultValue>secondary</defaultValue>
+            <options>
+                <option>
+                    <id>primary</id>
+                    <name>Primary</name>
+                    <name lang="pl-PL">Główny</name>
+                    <name lang="de-DE">Primär</name>
+                </option>
+                <option>
+                    <id>secondary</id>
+                    <name>Secondary</name>
+                    <name lang="pl-PL">Dodatkowy</name>
+                    <name lang="de-DE">Sekundär</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>productCardFrameStyle</name>
+            <label>Frame Style</label>
+            <label lang="pl-PL">Styl ramki</label>
+            <label lang="de-DE">Rahmenstil</label>
+            <helpText>Widget frame style</helpText>
+            <helpText lang="pl-PL">Styl ramki widgetu</helpText>
+            <helpText lang="de-DE">Rahmenstil des Widgets</helpText>
+            <options>
+                <option>
+                    <id>rounded</id>
+                    <name>Rounded</name>
+                    <name lang="pl-PL">Zaokrąglony</name>
+                    <name lang="de-DE">Abgerundet</name>
+                </option>
+                <option>
+                    <id>round</id>
+                    <name>Round</name>
+                    <name lang="pl-PL">Okrągły</name>
+                    <name lang="de-DE">Rund</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>productCardSize</name>
+            <label>Size</label>
+            <label lang="pl-PL">Rozmiar</label>
+            <label lang="de-DE">Größe</label>
+            <helpText>Widget size</helpText>
+            <helpText lang="pl-PL">Rozmiar widgetu</helpText>
+            <helpText lang="de-DE">Widget-Größe</helpText>
+            <options>
+                <option>
+                    <id>size-xs</id>
+                    <name>Extra Small</name>
+                    <name lang="pl-PL">Bardzo mały</name>
+                    <name lang="de-DE">Extra Klein</name>
+                </option>
+                <option>
+                    <id>size-sm</id>
+                    <name>Small</name>
+                    <name lang="pl-PL">Mały</name>
+                    <name lang="de-DE">Klein</name>
+                </option>
+                <option>
+                    <id>size-md</id>
+                    <name>Medium</name>
+                    <name lang="pl-PL">Średni</name>
+                    <name lang="de-DE">Mittel</name>
+                </option>
+                <option>
+                    <id>size-lg</id>
+                    <name>Large</name>
+                    <name lang="pl-PL">Duży</name>
+                    <name lang="de-DE">Groß</name>
+                </option>
+                <option>
+                    <id>size-xl</id>
+                    <name>Extra Large</name>
+                    <name lang="pl-PL">Bardzo duży</name>
+                    <name lang="de-DE">Extra Groß</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="int">
+            <name>productCardMaxWidth</name>
+            <label>Max Width (px)</label>
+            <label lang="pl-PL">Maks. szerokość (px)</label>
+            <label lang="de-DE">Max. Breite (px)</label>
+            <helpText>Maximum widget width in pixels (220-1200)</helpText>
+            <helpText lang="pl-PL">Maksymalna szerokość widgetu w pikselach (220-1200)</helpText>
+            <helpText lang="de-DE">Maximale Widget-Breite in Pixel (220-1200)</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>productCardMarginTop</name>
+            <label>Margin Top (px)</label>
+            <label lang="pl-PL">Margines górny (px)</label>
+            <label lang="de-DE">Oberer Rand (px)</label>
+            <helpText>Top margin in pixels</helpText>
+            <helpText lang="pl-PL">Górny margines w pikselach</helpText>
+            <helpText lang="de-DE">Oberer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>productCardMarginBottom</name>
+            <label>Margin Bottom (px)</label>
+            <label lang="pl-PL">Margines dolny (px)</label>
+            <label lang="de-DE">Unterer Rand (px)</label>
+            <helpText>Bottom margin in pixels</helpText>
+            <helpText lang="pl-PL">Dolny margines w pikselach</helpText>
+            <helpText lang="de-DE">Unterer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>productCardMarginLeft</name>
+            <label>Margin Left (px)</label>
+            <label lang="pl-PL">Margines lewy (px)</label>
+            <label lang="de-DE">Linker Rand (px)</label>
+            <helpText>Left margin in pixels</helpText>
+            <helpText lang="pl-PL">Lewy margines w pikselach</helpText>
+            <helpText lang="de-DE">Linker Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>productCardMarginRight</name>
+            <label>Margin Right (px)</label>
+            <label lang="pl-PL">Margines prawy (px)</label>
+            <label lang="de-DE">Rechter Rand (px)</label>
+            <helpText>Right margin in pixels</helpText>
+            <helpText lang="pl-PL">Prawy margines w pikselach</helpText>
+            <helpText lang="de-DE">Rechter Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>productCardJustifyContent</name>
+            <label>Alignment</label>
+            <label lang="pl-PL">Wyrównanie</label>
+            <label lang="de-DE">Ausrichtung</label>
+            <helpText>Widget horizontal alignment</helpText>
+            <helpText lang="pl-PL">Poziome wyrównanie widgetu</helpText>
+            <helpText lang="de-DE">Horizontale Ausrichtung des Widgets</helpText>
+            <options>
+                <option>
+                    <id>start</id>
+                    <name>Left</name>
+                    <name lang="pl-PL">Do lewej</name>
+                    <name lang="de-DE">Links</name>
+                </option>
+                <option>
+                    <id>center</id>
+                    <name>Center</name>
+                    <name lang="pl-PL">Wyśrodkowany</name>
+                    <name lang="de-DE">Zentriert</name>
+                </option>
+                <option>
+                    <id>end</id>
+                    <name>Right</name>
+                    <name lang="pl-PL">Do prawej</name>
+                    <name lang="de-DE">Rechts</name>
+                </option>
+            </options>
+        </input-field>
+    </card>
+
+    <!-- Widget Display Configuration - Mini Cart (Offcanvas) -->
+    <card>
+        <title>Widget Display - Mini Cart</title>
+        <title lang="pl-PL">Wyświetlanie widgetu - Mini koszyk</title>
+        <title lang="de-DE">Widget-Anzeige - Mini-Warenkorb</title>
+
+        <input-field type="checkbox">
+            <name>miniCartPageDisplayed</name>
+            <label>Display the Widget</label>
+            <label lang="pl-PL">Wyświetl widget</label>
+            <label lang="de-DE">Widget anzeigen</label>
+            <helpText>Show InPost Pay widget in mini cart (offcanvas)</helpText>
+            <helpText lang="pl-PL">Pokaż widget InPost Pay w mini koszyku (offcanvas)</helpText>
+            <helpText lang="de-DE">InPost Pay Widget im Mini-Warenkorb (Offcanvas) anzeigen</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="checkbox">
+            <name>miniCartPageDarkMode</name>
+            <label>Dark Mode</label>
+            <label lang="pl-PL">Tryb ciemny</label>
+            <label lang="de-DE">Dunkelmodus</label>
+            <helpText>Enable dark mode for the widget</helpText>
+            <helpText lang="pl-PL">Włącz tryb ciemny dla widgetu</helpText>
+            <helpText lang="de-DE">Dunkelmodus für das Widget aktivieren</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>miniCartPageVariant</name>
+            <label>Variant</label>
+            <label lang="pl-PL">Wariant</label>
+            <label lang="de-DE">Variante</label>
+            <helpText>Widget color variant</helpText>
+            <helpText lang="pl-PL">Wariant kolorystyczny widgetu</helpText>
+            <helpText lang="de-DE">Farbvariante des Widgets</helpText>
+            <defaultValue>secondary</defaultValue>
+            <options>
+                <option>
+                    <id>primary</id>
+                    <name>Primary</name>
+                    <name lang="pl-PL">Główny</name>
+                    <name lang="de-DE">Primär</name>
+                </option>
+                <option>
+                    <id>secondary</id>
+                    <name>Secondary</name>
+                    <name lang="pl-PL">Dodatkowy</name>
+                    <name lang="de-DE">Sekundär</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>miniCartPageFrameStyle</name>
+            <label>Frame Style</label>
+            <label lang="pl-PL">Styl ramki</label>
+            <label lang="de-DE">Rahmenstil</label>
+            <helpText>Widget frame style</helpText>
+            <helpText lang="pl-PL">Styl ramki widgetu</helpText>
+            <helpText lang="de-DE">Rahmenstil des Widgets</helpText>
+            <options>
+                <option>
+                    <id>rounded</id>
+                    <name>Rounded</name>
+                    <name lang="pl-PL">Zaokrąglony</name>
+                    <name lang="de-DE">Abgerundet</name>
+                </option>
+                <option>
+                    <id>round</id>
+                    <name>Round</name>
+                    <name lang="pl-PL">Okrągły</name>
+                    <name lang="de-DE">Rund</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>miniCartPageSize</name>
+            <label>Size</label>
+            <label lang="pl-PL">Rozmiar</label>
+            <label lang="de-DE">Größe</label>
+            <helpText>Widget size</helpText>
+            <helpText lang="pl-PL">Rozmiar widgetu</helpText>
+            <helpText lang="de-DE">Widget-Größe</helpText>
+            <options>
+                <option>
+                    <id>size-xs</id>
+                    <name>Extra Small</name>
+                    <name lang="pl-PL">Bardzo mały</name>
+                    <name lang="de-DE">Extra Klein</name>
+                </option>
+                <option>
+                    <id>size-sm</id>
+                    <name>Small</name>
+                    <name lang="pl-PL">Mały</name>
+                    <name lang="de-DE">Klein</name>
+                </option>
+                <option>
+                    <id>size-md</id>
+                    <name>Medium</name>
+                    <name lang="pl-PL">Średni</name>
+                    <name lang="de-DE">Mittel</name>
+                </option>
+                <option>
+                    <id>size-lg</id>
+                    <name>Large</name>
+                    <name lang="pl-PL">Duży</name>
+                    <name lang="de-DE">Groß</name>
+                </option>
+                <option>
+                    <id>size-xl</id>
+                    <name>Extra Large</name>
+                    <name lang="pl-PL">Bardzo duży</name>
+                    <name lang="de-DE">Extra Groß</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="int">
+            <name>miniCartPageMaxWidth</name>
+            <label>Max Width (px)</label>
+            <label lang="pl-PL">Maks. szerokość (px)</label>
+            <label lang="de-DE">Max. Breite (px)</label>
+            <helpText>Maximum widget width in pixels (220-1200)</helpText>
+            <helpText lang="pl-PL">Maksymalna szerokość widgetu w pikselach (220-1200)</helpText>
+            <helpText lang="de-DE">Maximale Widget-Breite in Pixel (220-1200)</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>miniCartPageMarginTop</name>
+            <label>Margin Top (px)</label>
+            <label lang="pl-PL">Margines górny (px)</label>
+            <label lang="de-DE">Oberer Rand (px)</label>
+            <helpText>Top margin in pixels</helpText>
+            <helpText lang="pl-PL">Górny margines w pikselach</helpText>
+            <helpText lang="de-DE">Oberer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>miniCartPageMarginBottom</name>
+            <label>Margin Bottom (px)</label>
+            <label lang="pl-PL">Margines dolny (px)</label>
+            <label lang="de-DE">Unterer Rand (px)</label>
+            <helpText>Bottom margin in pixels</helpText>
+            <helpText lang="pl-PL">Dolny margines w pikselach</helpText>
+            <helpText lang="de-DE">Unterer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>miniCartPageMarginLeft</name>
+            <label>Margin Left (px)</label>
+            <label lang="pl-PL">Margines lewy (px)</label>
+            <label lang="de-DE">Linker Rand (px)</label>
+            <helpText>Left margin in pixels</helpText>
+            <helpText lang="pl-PL">Lewy margines w pikselach</helpText>
+            <helpText lang="de-DE">Linker Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>miniCartPageMarginRight</name>
+            <label>Margin Right (px)</label>
+            <label lang="pl-PL">Margines prawy (px)</label>
+            <label lang="de-DE">Rechter Rand (px)</label>
+            <helpText>Right margin in pixels</helpText>
+            <helpText lang="pl-PL">Prawy margines w pikselach</helpText>
+            <helpText lang="de-DE">Rechter Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>miniCartPageJustifyContent</name>
+            <label>Alignment</label>
+            <label lang="pl-PL">Wyrównanie</label>
+            <label lang="de-DE">Ausrichtung</label>
+            <helpText>Widget horizontal alignment</helpText>
+            <helpText lang="pl-PL">Poziome wyrównanie widgetu</helpText>
+            <helpText lang="de-DE">Horizontale Ausrichtung des Widgets</helpText>
+            <options>
+                <option>
+                    <id>start</id>
+                    <name>Left</name>
+                    <name lang="pl-PL">Do lewej</name>
+                    <name lang="de-DE">Links</name>
+                </option>
+                <option>
+                    <id>center</id>
+                    <name>Center</name>
+                    <name lang="pl-PL">Wyśrodkowany</name>
+                    <name lang="de-DE">Zentriert</name>
+                </option>
+                <option>
+                    <id>end</id>
+                    <name>Right</name>
+                    <name lang="pl-PL">Do prawej</name>
+                    <name lang="de-DE">Rechts</name>
+                </option>
+            </options>
+        </input-field>
+    </card>
+
+    <!-- Widget Display Configuration - Cart Summary -->
+    <card>
+        <title>Widget Display - Cart Summary</title>
+        <title lang="pl-PL">Wyświetlanie widgetu - Podsumowanie koszyka</title>
+        <title lang="de-DE">Widget-Anzeige - Warenkorbübersicht</title>
+
+        <input-field type="checkbox">
+            <name>basketSummaryDisplayed</name>
+            <label>Display the Widget</label>
+            <label lang="pl-PL">Wyświetl widget</label>
+            <label lang="de-DE">Widget anzeigen</label>
+            <helpText>Show InPost Pay widget on cart summary page</helpText>
+            <helpText lang="pl-PL">Pokaż widget InPost Pay na stronie podsumowania koszyka</helpText>
+            <helpText lang="de-DE">InPost Pay Widget auf der Warenkorbübersicht anzeigen</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="checkbox">
+            <name>basketSummaryDarkMode</name>
+            <label>Dark Mode</label>
+            <label lang="pl-PL">Tryb ciemny</label>
+            <label lang="de-DE">Dunkelmodus</label>
+            <helpText>Enable dark mode for the widget</helpText>
+            <helpText lang="pl-PL">Włącz tryb ciemny dla widgetu</helpText>
+            <helpText lang="de-DE">Dunkelmodus für das Widget aktivieren</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>basketSummaryVariant</name>
+            <label>Variant</label>
+            <label lang="pl-PL">Wariant</label>
+            <label lang="de-DE">Variante</label>
+            <helpText>Widget color variant</helpText>
+            <helpText lang="pl-PL">Wariant kolorystyczny widgetu</helpText>
+            <helpText lang="de-DE">Farbvariante des Widgets</helpText>
+            <defaultValue>secondary</defaultValue>
+            <options>
+                <option>
+                    <id>primary</id>
+                    <name>Primary</name>
+                    <name lang="pl-PL">Główny</name>
+                    <name lang="de-DE">Primär</name>
+                </option>
+                <option>
+                    <id>secondary</id>
+                    <name>Secondary</name>
+                    <name lang="pl-PL">Dodatkowy</name>
+                    <name lang="de-DE">Sekundär</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>basketSummaryFrameStyle</name>
+            <label>Frame Style</label>
+            <label lang="pl-PL">Styl ramki</label>
+            <label lang="de-DE">Rahmenstil</label>
+            <helpText>Widget frame style</helpText>
+            <helpText lang="pl-PL">Styl ramki widgetu</helpText>
+            <helpText lang="de-DE">Rahmenstil des Widgets</helpText>
+            <options>
+                <option>
+                    <id>rounded</id>
+                    <name>Rounded</name>
+                    <name lang="pl-PL">Zaokrąglony</name>
+                    <name lang="de-DE">Abgerundet</name>
+                </option>
+                <option>
+                    <id>round</id>
+                    <name>Round</name>
+                    <name lang="pl-PL">Okrągły</name>
+                    <name lang="de-DE">Rund</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>basketSummarySize</name>
+            <label>Size</label>
+            <label lang="pl-PL">Rozmiar</label>
+            <label lang="de-DE">Größe</label>
+            <helpText>Widget size</helpText>
+            <helpText lang="pl-PL">Rozmiar widgetu</helpText>
+            <helpText lang="de-DE">Widget-Größe</helpText>
+            <options>
+                <option>
+                    <id>size-xs</id>
+                    <name>Extra Small</name>
+                    <name lang="pl-PL">Bardzo mały</name>
+                    <name lang="de-DE">Extra Klein</name>
+                </option>
+                <option>
+                    <id>size-sm</id>
+                    <name>Small</name>
+                    <name lang="pl-PL">Mały</name>
+                    <name lang="de-DE">Klein</name>
+                </option>
+                <option>
+                    <id>size-md</id>
+                    <name>Medium</name>
+                    <name lang="pl-PL">Średni</name>
+                    <name lang="de-DE">Mittel</name>
+                </option>
+                <option>
+                    <id>size-lg</id>
+                    <name>Large</name>
+                    <name lang="pl-PL">Duży</name>
+                    <name lang="de-DE">Groß</name>
+                </option>
+                <option>
+                    <id>size-xl</id>
+                    <name>Extra Large</name>
+                    <name lang="pl-PL">Bardzo duży</name>
+                    <name lang="de-DE">Extra Groß</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="int">
+            <name>basketSummaryMaxWidth</name>
+            <label>Max Width (px)</label>
+            <label lang="pl-PL">Maks. szerokość (px)</label>
+            <label lang="de-DE">Max. Breite (px)</label>
+            <helpText>Maximum widget width in pixels (220-1200)</helpText>
+            <helpText lang="pl-PL">Maksymalna szerokość widgetu w pikselach (220-1200)</helpText>
+            <helpText lang="de-DE">Maximale Widget-Breite in Pixel (220-1200)</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>basketSummaryMarginTop</name>
+            <label>Margin Top (px)</label>
+            <label lang="pl-PL">Margines górny (px)</label>
+            <label lang="de-DE">Oberer Rand (px)</label>
+            <helpText>Top margin in pixels</helpText>
+            <helpText lang="pl-PL">Górny margines w pikselach</helpText>
+            <helpText lang="de-DE">Oberer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>basketSummaryMarginBottom</name>
+            <label>Margin Bottom (px)</label>
+            <label lang="pl-PL">Margines dolny (px)</label>
+            <label lang="de-DE">Unterer Rand (px)</label>
+            <helpText>Bottom margin in pixels</helpText>
+            <helpText lang="pl-PL">Dolny margines w pikselach</helpText>
+            <helpText lang="de-DE">Unterer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>basketSummaryMarginLeft</name>
+            <label>Margin Left (px)</label>
+            <label lang="pl-PL">Margines lewy (px)</label>
+            <label lang="de-DE">Linker Rand (px)</label>
+            <helpText>Left margin in pixels</helpText>
+            <helpText lang="pl-PL">Lewy margines w pikselach</helpText>
+            <helpText lang="de-DE">Linker Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>basketSummaryMarginRight</name>
+            <label>Margin Right (px)</label>
+            <label lang="pl-PL">Margines prawy (px)</label>
+            <label lang="de-DE">Rechter Rand (px)</label>
+            <helpText>Right margin in pixels</helpText>
+            <helpText lang="pl-PL">Prawy margines w pikselach</helpText>
+            <helpText lang="de-DE">Rechter Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>basketSummaryJustifyContent</name>
+            <label>Alignment</label>
+            <label lang="pl-PL">Wyrównanie</label>
+            <label lang="de-DE">Ausrichtung</label>
+            <helpText>Widget horizontal alignment</helpText>
+            <helpText lang="pl-PL">Poziome wyrównanie widgetu</helpText>
+            <helpText lang="de-DE">Horizontale Ausrichtung des Widgets</helpText>
+            <options>
+                <option>
+                    <id>start</id>
+                    <name>Left</name>
+                    <name lang="pl-PL">Do lewej</name>
+                    <name lang="de-DE">Links</name>
+                </option>
+                <option>
+                    <id>center</id>
+                    <name>Center</name>
+                    <name lang="pl-PL">Wyśrodkowany</name>
+                    <name lang="de-DE">Zentriert</name>
+                </option>
+                <option>
+                    <id>end</id>
+                    <name>Right</name>
+                    <name lang="pl-PL">Do prawej</name>
+                    <name lang="de-DE">Rechts</name>
+                </option>
+            </options>
+        </input-field>
+    </card>
+
+    <!-- Widget Display Configuration - Checkout Page -->
+    <card>
+        <title>Widget Display - Checkout Page</title>
+        <title lang="pl-PL">Wyświetlanie widgetu - Strona kasy</title>
+        <title lang="de-DE">Widget-Anzeige - Kassenseite</title>
+
+        <input-field type="checkbox">
+            <name>checkoutPageDisplayed</name>
+            <label>Display the Widget</label>
+            <label lang="pl-PL">Wyświetl widget</label>
+            <label lang="de-DE">Widget anzeigen</label>
+            <helpText>Show InPost Pay widget on checkout page</helpText>
+            <helpText lang="pl-PL">Pokaż widget InPost Pay na stronie kasy</helpText>
+            <helpText lang="de-DE">InPost Pay Widget auf der Kassenseite anzeigen</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="checkbox">
+            <name>checkoutPageDarkMode</name>
+            <label>Dark Mode</label>
+            <label lang="pl-PL">Tryb ciemny</label>
+            <label lang="de-DE">Dunkelmodus</label>
+            <helpText>Enable dark mode for the widget</helpText>
+            <helpText lang="pl-PL">Włącz tryb ciemny dla widgetu</helpText>
+            <helpText lang="de-DE">Dunkelmodus für das Widget aktivieren</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>checkoutPageVariant</name>
+            <label>Variant</label>
+            <label lang="pl-PL">Wariant</label>
+            <label lang="de-DE">Variante</label>
+            <helpText>Widget color variant</helpText>
+            <helpText lang="pl-PL">Wariant kolorystyczny widgetu</helpText>
+            <helpText lang="de-DE">Farbvariante des Widgets</helpText>
+            <defaultValue>secondary</defaultValue>
+            <options>
+                <option>
+                    <id>primary</id>
+                    <name>Primary</name>
+                    <name lang="pl-PL">Główny</name>
+                    <name lang="de-DE">Primär</name>
+                </option>
+                <option>
+                    <id>secondary</id>
+                    <name>Secondary</name>
+                    <name lang="pl-PL">Dodatkowy</name>
+                    <name lang="de-DE">Sekundär</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>checkoutPageFrameStyle</name>
+            <label>Frame Style</label>
+            <label lang="pl-PL">Styl ramki</label>
+            <label lang="de-DE">Rahmenstil</label>
+            <helpText>Widget frame style</helpText>
+            <helpText lang="pl-PL">Styl ramki widgetu</helpText>
+            <helpText lang="de-DE">Rahmenstil des Widgets</helpText>
+            <options>
+                <option>
+                    <id>rounded</id>
+                    <name>Rounded</name>
+                    <name lang="pl-PL">Zaokrąglony</name>
+                    <name lang="de-DE">Abgerundet</name>
+                </option>
+                <option>
+                    <id>round</id>
+                    <name>Round</name>
+                    <name lang="pl-PL">Okrągły</name>
+                    <name lang="de-DE">Rund</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>checkoutPageSize</name>
+            <label>Size</label>
+            <label lang="pl-PL">Rozmiar</label>
+            <label lang="de-DE">Größe</label>
+            <helpText>Widget size</helpText>
+            <helpText lang="pl-PL">Rozmiar widgetu</helpText>
+            <helpText lang="de-DE">Widget-Größe</helpText>
+            <options>
+                <option>
+                    <id>size-xs</id>
+                    <name>Extra Small</name>
+                    <name lang="pl-PL">Bardzo mały</name>
+                    <name lang="de-DE">Extra Klein</name>
+                </option>
+                <option>
+                    <id>size-sm</id>
+                    <name>Small</name>
+                    <name lang="pl-PL">Mały</name>
+                    <name lang="de-DE">Klein</name>
+                </option>
+                <option>
+                    <id>size-md</id>
+                    <name>Medium</name>
+                    <name lang="pl-PL">Średni</name>
+                    <name lang="de-DE">Mittel</name>
+                </option>
+                <option>
+                    <id>size-lg</id>
+                    <name>Large</name>
+                    <name lang="pl-PL">Duży</name>
+                    <name lang="de-DE">Groß</name>
+                </option>
+                <option>
+                    <id>size-xl</id>
+                    <name>Extra Large</name>
+                    <name lang="pl-PL">Bardzo duży</name>
+                    <name lang="de-DE">Extra Groß</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="int">
+            <name>checkoutPageMaxWidth</name>
+            <label>Max Width (px)</label>
+            <label lang="pl-PL">Maks. szerokość (px)</label>
+            <label lang="de-DE">Max. Breite (px)</label>
+            <helpText>Maximum widget width in pixels (220-1200)</helpText>
+            <helpText lang="pl-PL">Maksymalna szerokość widgetu w pikselach (220-1200)</helpText>
+            <helpText lang="de-DE">Maximale Widget-Breite in Pixel (220-1200)</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>checkoutPageMarginTop</name>
+            <label>Margin Top (px)</label>
+            <label lang="pl-PL">Margines górny (px)</label>
+            <label lang="de-DE">Oberer Rand (px)</label>
+            <helpText>Top margin in pixels</helpText>
+            <helpText lang="pl-PL">Górny margines w pikselach</helpText>
+            <helpText lang="de-DE">Oberer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>checkoutPageMarginBottom</name>
+            <label>Margin Bottom (px)</label>
+            <label lang="pl-PL">Margines dolny (px)</label>
+            <label lang="de-DE">Unterer Rand (px)</label>
+            <helpText>Bottom margin in pixels</helpText>
+            <helpText lang="pl-PL">Dolny margines w pikselach</helpText>
+            <helpText lang="de-DE">Unterer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>checkoutPageMarginLeft</name>
+            <label>Margin Left (px)</label>
+            <label lang="pl-PL">Margines lewy (px)</label>
+            <label lang="de-DE">Linker Rand (px)</label>
+            <helpText>Left margin in pixels</helpText>
+            <helpText lang="pl-PL">Lewy margines w pikselach</helpText>
+            <helpText lang="de-DE">Linker Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>checkoutPageMarginRight</name>
+            <label>Margin Right (px)</label>
+            <label lang="pl-PL">Margines prawy (px)</label>
+            <label lang="de-DE">Rechter Rand (px)</label>
+            <helpText>Right margin in pixels</helpText>
+            <helpText lang="pl-PL">Prawy margines w pikselach</helpText>
+            <helpText lang="de-DE">Rechter Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>checkoutPageJustifyContent</name>
+            <label>Alignment</label>
+            <label lang="pl-PL">Wyrównanie</label>
+            <label lang="de-DE">Ausrichtung</label>
+            <helpText>Widget horizontal alignment</helpText>
+            <helpText lang="pl-PL">Poziome wyrównanie widgetu</helpText>
+            <helpText lang="de-DE">Horizontale Ausrichtung des Widgets</helpText>
+            <options>
+                <option>
+                    <id>start</id>
+                    <name>Left</name>
+                    <name lang="pl-PL">Do lewej</name>
+                    <name lang="de-DE">Links</name>
+                </option>
+                <option>
+                    <id>center</id>
+                    <name>Center</name>
+                    <name lang="pl-PL">Wyśrodkowany</name>
+                    <name lang="de-DE">Zentriert</name>
+                </option>
+                <option>
+                    <id>end</id>
+                    <name>Right</name>
+                    <name lang="pl-PL">Do prawej</name>
+                    <name lang="de-DE">Rechts</name>
+                </option>
+            </options>
+        </input-field>
+    </card>
+
+    <!-- Widget Display Configuration - Register Page -->
+    <card>
+        <title>Widget Display - Register Page</title>
+        <title lang="pl-PL">Wyświetlanie widgetu - Strona rejestracji</title>
+        <title lang="de-DE">Widget-Anzeige - Registrierungsseite</title>
+
+        <input-field type="checkbox">
+            <name>registerPageDisplayed</name>
+            <label>Display the Widget</label>
+            <label lang="pl-PL">Wyświetl widget</label>
+            <label lang="de-DE">Widget anzeigen</label>
+            <helpText>Show InPost Pay widget on register page</helpText>
+            <helpText lang="pl-PL">Pokaż widget InPost Pay na stronie rejestracji</helpText>
+            <helpText lang="de-DE">InPost Pay Widget auf der Registrierungsseite anzeigen</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="checkbox">
+            <name>registerPageDarkMode</name>
+            <label>Dark Mode</label>
+            <label lang="pl-PL">Tryb ciemny</label>
+            <label lang="de-DE">Dunkelmodus</label>
+            <helpText>Enable dark mode for the widget</helpText>
+            <helpText lang="pl-PL">Włącz tryb ciemny dla widgetu</helpText>
+            <helpText lang="de-DE">Dunkelmodus für das Widget aktivieren</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>registerPageVariant</name>
+            <label>Variant</label>
+            <label lang="pl-PL">Wariant</label>
+            <label lang="de-DE">Variante</label>
+            <helpText>Widget color variant</helpText>
+            <helpText lang="pl-PL">Wariant kolorystyczny widgetu</helpText>
+            <helpText lang="de-DE">Farbvariante des Widgets</helpText>
+            <defaultValue>secondary</defaultValue>
+            <options>
+                <option>
+                    <id>primary</id>
+                    <name>Primary</name>
+                    <name lang="pl-PL">Główny</name>
+                    <name lang="de-DE">Primär</name>
+                </option>
+                <option>
+                    <id>secondary</id>
+                    <name>Secondary</name>
+                    <name lang="pl-PL">Dodatkowy</name>
+                    <name lang="de-DE">Sekundär</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>registerPageFrameStyle</name>
+            <label>Frame Style</label>
+            <label lang="pl-PL">Styl ramki</label>
+            <label lang="de-DE">Rahmenstil</label>
+            <helpText>Widget frame style</helpText>
+            <helpText lang="pl-PL">Styl ramki widgetu</helpText>
+            <helpText lang="de-DE">Rahmenstil des Widgets</helpText>
+            <options>
+                <option>
+                    <id>rounded</id>
+                    <name>Rounded</name>
+                    <name lang="pl-PL">Zaokrąglony</name>
+                    <name lang="de-DE">Abgerundet</name>
+                </option>
+                <option>
+                    <id>round</id>
+                    <name>Round</name>
+                    <name lang="pl-PL">Okrągły</name>
+                    <name lang="de-DE">Rund</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>registerPageSize</name>
+            <label>Size</label>
+            <label lang="pl-PL">Rozmiar</label>
+            <label lang="de-DE">Größe</label>
+            <helpText>Widget size</helpText>
+            <helpText lang="pl-PL">Rozmiar widgetu</helpText>
+            <helpText lang="de-DE">Widget-Größe</helpText>
+            <options>
+                <option>
+                    <id>size-xs</id>
+                    <name>Extra Small</name>
+                    <name lang="pl-PL">Bardzo mały</name>
+                    <name lang="de-DE">Extra Klein</name>
+                </option>
+                <option>
+                    <id>size-sm</id>
+                    <name>Small</name>
+                    <name lang="pl-PL">Mały</name>
+                    <name lang="de-DE">Klein</name>
+                </option>
+                <option>
+                    <id>size-md</id>
+                    <name>Medium</name>
+                    <name lang="pl-PL">Średni</name>
+                    <name lang="de-DE">Mittel</name>
+                </option>
+                <option>
+                    <id>size-lg</id>
+                    <name>Large</name>
+                    <name lang="pl-PL">Duży</name>
+                    <name lang="de-DE">Groß</name>
+                </option>
+                <option>
+                    <id>size-xl</id>
+                    <name>Extra Large</name>
+                    <name lang="pl-PL">Bardzo duży</name>
+                    <name lang="de-DE">Extra Groß</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="int">
+            <name>registerPageMaxWidth</name>
+            <label>Max Width (px)</label>
+            <label lang="pl-PL">Maks. szerokość (px)</label>
+            <label lang="de-DE">Max. Breite (px)</label>
+            <helpText>Maximum widget width in pixels (220-1200)</helpText>
+            <helpText lang="pl-PL">Maksymalna szerokość widgetu w pikselach (220-1200)</helpText>
+            <helpText lang="de-DE">Maximale Widget-Breite in Pixel (220-1200)</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>registerPageMarginTop</name>
+            <label>Margin Top (px)</label>
+            <label lang="pl-PL">Margines górny (px)</label>
+            <label lang="de-DE">Oberer Rand (px)</label>
+            <helpText>Top margin in pixels</helpText>
+            <helpText lang="pl-PL">Górny margines w pikselach</helpText>
+            <helpText lang="de-DE">Oberer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>registerPageMarginBottom</name>
+            <label>Margin Bottom (px)</label>
+            <label lang="pl-PL">Margines dolny (px)</label>
+            <label lang="de-DE">Unterer Rand (px)</label>
+            <helpText>Bottom margin in pixels</helpText>
+            <helpText lang="pl-PL">Dolny margines w pikselach</helpText>
+            <helpText lang="de-DE">Unterer Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>registerPageMarginLeft</name>
+            <label>Margin Left (px)</label>
+            <label lang="pl-PL">Margines lewy (px)</label>
+            <label lang="de-DE">Linker Rand (px)</label>
+            <helpText>Left margin in pixels</helpText>
+            <helpText lang="pl-PL">Lewy margines w pikselach</helpText>
+            <helpText lang="de-DE">Linker Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>registerPageMarginRight</name>
+            <label>Margin Right (px)</label>
+            <label lang="pl-PL">Margines prawy (px)</label>
+            <label lang="de-DE">Rechter Rand (px)</label>
+            <helpText>Right margin in pixels</helpText>
+            <helpText lang="pl-PL">Prawy margines w pikselach</helpText>
+            <helpText lang="de-DE">Rechter Rand in Pixel</helpText>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>registerPageJustifyContent</name>
+            <label>Alignment</label>
+            <label lang="pl-PL">Wyrównanie</label>
+            <label lang="de-DE">Ausrichtung</label>
+            <helpText>Widget horizontal alignment</helpText>
+            <helpText lang="pl-PL">Poziome wyrównanie widgetu</helpText>
+            <helpText lang="de-DE">Horizontale Ausrichtung des Widgets</helpText>
+            <options>
+                <option>
+                    <id>start</id>
+                    <name>Left</name>
+                    <name lang="pl-PL">Do lewej</name>
+                    <name lang="de-DE">Links</name>
+                </option>
+                <option>
+                    <id>center</id>
+                    <name>Center</name>
+                    <name lang="pl-PL">Wyśrodkowany</name>
+                    <name lang="de-DE">Zentriert</name>
+                </option>
+                <option>
+                    <id>end</id>
+                    <name>Right</name>
+                    <name lang="pl-PL">Do prawej</name>
+                    <name lang="de-DE">Rechts</name>
+                </option>
+            </options>
+        </input-field>
+    </card>
+
+    <!-- Consents Configuration -->
+    <card>
+        <title>Consents Configuration</title>
+        <title lang="pl-PL">Konfiguracja zgód</title>
+        <title lang="de-DE">Einwilligungskonfiguration</title>
+
+        <component name="inpost-consents-manager">
+            <name>consents</name>
+            <label>Manage Consents</label>
+            <label lang="pl-PL">Zarządzaj zgodami</label>
+            <label lang="de-DE">Einwilligungen verwalten</label>
+            <helpText>Configure consents that will be displayed to customers in the InPost Pay checkout widget. At least one consent (e.g., Terms of Service) is required.</helpText>
+            <helpText lang="pl-PL">Skonfiguruj zgody, które będą wyświetlane klientom w widgecie InPost Pay. Wymagana jest co najmniej jedna zgoda (np. regulamin).</helpText>
+            <helpText lang="de-DE">Konfigurieren Sie die Einwilligungen, die Kunden im InPost Pay Checkout-Widget angezeigt werden. Mindestens eine Einwilligung (z.B. AGB) ist erforderlich.</helpText>
+        </component>
+    </card>
+</config>
