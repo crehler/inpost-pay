@@ -49,7 +49,7 @@ final readonly class ConsentConfigProvider
         );
 
         if (empty($consentsData) || !is_array($consentsData)) {
-            return $this->getDefaultConsents();
+            return $this->getDefaultConsents($context->getSalesChannel()->getId());
         }
 
         $configurations = [];
@@ -66,7 +66,7 @@ final readonly class ConsentConfigProvider
         }
 
         if (empty($configurations)) {
-            return $this->getDefaultConsents();
+            return $this->getDefaultConsents($context->getSalesChannel()->getId());
         }
 
         return $configurations;
@@ -80,7 +80,7 @@ final readonly class ConsentConfigProvider
         $consentsData = $this->systemConfigService->get(self::CONFIG_KEY, $salesChannelId);
 
         if (empty($consentsData) || !is_array($consentsData)) {
-            return $this->getDefaultConsents();
+            return $this->getDefaultConsents($salesChannelId);
         }
 
         $configurations = [];
@@ -121,18 +121,29 @@ final readonly class ConsentConfigProvider
     }
 
     /**
+     * Default consent used when the merchant has not configured consents in the
+     * admin panel. The terms/GTC link is taken from the standard Shopware shop page
+     * (Settings -> Basic information -> Shop pages -> "Terms and conditions page"),
+     * i.e. the sales-channel `core.basicInformation.tosPage` CMS page. When that
+     * page is set (Shopware ships it by default), the link resolves automatically;
+     * when it is not, the link stays empty and ConsentService drops the consent
+     * instead of sending a blank link to InPost.
+     *
      * @return ConsentConfiguration[]
      */
-    private function getDefaultConsents(): array
+    private function getDefaultConsents(?string $salesChannelId = null): array
     {
+        $tosPageId = $this->systemConfigService->get('core.basicInformation.tosPage', $salesChannelId);
+        $tosPageId = is_string($tosPageId) && $tosPageId !== '' ? $tosPageId : null;
+
         return [
             new ConsentConfiguration(
                 id: 'terms',
                 enabled: true,
                 requirementType: ConsentRequirementType::REQUIRED_ONCE,
                 version: '1.0',
-                linkType: ConsentLinkType::EXTERNAL,
-                cmsPageId: null,
+                linkType: ConsentLinkType::CMS_PAGE,
+                cmsPageId: $tosPageId,
                 externalLink: null,
                 translations: [
                     'pl-PL' => [
