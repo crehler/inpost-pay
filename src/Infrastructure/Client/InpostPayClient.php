@@ -15,6 +15,7 @@ use Crehler\InpostPay\Application\Dto\{TransactionQueryDto, TransactionResponseD
 use Crehler\InpostPay\Domain\Exception\InpostPayEndpointException;
 use Crehler\InpostPay\Domain\ValueObject\WidgetConfig;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\GenericProvider;
@@ -153,9 +154,21 @@ final readonly class InpostPayClient
 
             $response = $this->delete($url, $bearerToken);
 
+            // 404 (BASKET_NOT_FOUND) means the binding is already gone on InPost's
+            // side - deleting is idempotent, so treat it as success.
+            if ($response->getStatusCode() === 404) {
+                return;
+            }
+
             if ($response->getStatusCode() !== 204) {
                 throw new InpostPayEndpointException(sprintf('Unexpected status code %d when deleting basket binding', $response->getStatusCode()));
             }
+        } catch (ClientException $e) {
+            if ($e->getResponse()->getStatusCode() === 404) {
+                return;
+            }
+
+            throw new InpostPayEndpointException("Failed to delete basket binding: {$e->getMessage()}", (int) $e->getCode(), $e);
         } catch (GuzzleException $e) {
             throw new InpostPayEndpointException("Failed to delete basket binding: {$e->getMessage()}", (int) $e->getCode(), $e);
         }

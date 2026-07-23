@@ -1,25 +1,47 @@
 name: Build & Release
 
-# Buduje storefront + admin, tworzy ZIP i GitHub Release (FriendsOfShopware).
-# FoS sam czyta wersję z composer.json, tworzy tag vx.x.x i Release — dlatego
-# wyzwalacz to push na branch mirrora (publish.yml force-pushuje tam kod),
-# a NIE push tagu (FoS pominąłby release, gdyby tag już istniał).
-#
-# Uśpiony na repo źródłowym (guard niżej), aktywny tylko na mirrorze.
+# Pakuje wtyczke do ZIP i tworzy GitHub Release na publicznym mirrorze.
+# Aktywny TYLKO na mirrorze (guard nizej). Tag = wersja z composer.json,
+# ustawiany jawnie (bez github-tag-action), przypiety do commita buildu
+# (target_commitish) - dziala niezaleznie dla kazdej linii wydaniowej.
+# Build assetow/composera wylaczony w .shopware-extension.yml (assety commitowane),
+# wiec pakowanie nie wymaga Node/PHP.
 on:
   push:
     branches: [shopware_65]
 
 jobs:
-  build:
-    # Nie uruchamiaj na repo źródłowym — tylko na mirrorze (crehler/inpost).
+  release:
+    # Nie uruchamiaj na repo zrodlowym - tylko na mirrorze (crehler/inpost-pay).
     if: github.repository != 'crehler-com/InpostPay'
-    # GITHUB_TOKEN mirrora musi moc pushowac tag i tworzyc Release (FoS).
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    uses: FriendsOfShopware/actions/.github/workflows/github.yml@main
-    with:
-      extensionName: InpostPay
-      shopwareVersion: '6.5.0'
-    secrets:
-      ghToken: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup shopware-cli
+        uses: shopware/shopware-cli-action@v3
+
+      - name: Ustal wersje z composer.json
+        id: version
+        run: echo "version=$(jq -r .version composer.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Zbuduj ZIP
+        run: shopware-cli extension zip . --disable-git --filename InpostPay.zip
+
+      # Idempotencja: skasuj poprzedni release+tag tej wersji, zeby utworzyc go
+      # na nowo na wlasciwym commicie (softprops nie przesuwa istniejacego tagu).
+      - name: Usun poprzedni release/tag tej wersji
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete "${{ steps.version.outputs.version }}" --repo "${{ github.repository }}" --yes --cleanup-tag || true
+
+      - name: Utworz GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          files: InpostPay.zip
+          fail_on_unmatched_files: true

@@ -46,11 +46,17 @@ final readonly class ConsentService
             $link = $this->linkResolver->resolveLink($config, $context);
 
             if ($link === '') {
-                $this->logger->warning('Consent has empty link - configure consent links in admin panel', [
+                // InPost rejects consents with a blank link (400 "consents[].link must
+                // not be blank"). Skip such a consent instead of sending an empty link;
+                // the merchant must configure a link (or the Shopware shop page it maps
+                // to must be set).
+                $this->logger->warning('Consent skipped - empty link; configure the consent link (or the mapped Shopware shop page) in the admin panel', [
                     'consentId' => $config->id,
                     'linkType' => $config->linkType->value,
                     'salesChannelId' => $context->getSalesChannelId(),
                 ]);
+
+                continue;
             }
 
             $consents[] = new BasketConsent(

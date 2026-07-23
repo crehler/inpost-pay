@@ -2,7 +2,7 @@
     "name": "crehler/inpost-pay",
     "description": "InPost Pay integration",
     "type": "shopware-platform-plugin",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "authors": [
         {
             "name": "Crehler Sp. z o. o.",
