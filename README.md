@@ -110,7 +110,7 @@ Wtyczka obsługuje następujące metody płatności:
 
 ### Wymagania platformy:
 - **Shopware**: wersja **6.5.x**
-- **PHP**: wersja **8.1**, **8.2** lub **8.3**
+- **PHP**: wersja **8.2** lub **8.3**
 - **Composer**: do zarządzania zależnościami
 
 ### Wymagania funkcjonalne:

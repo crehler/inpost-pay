@@ -15,8 +15,7 @@ use Crehler\InpostPay\Application\Dto\{TransactionQueryDto, TransactionResponseD
 use Crehler\InpostPay\Domain\Exception\InpostPayEndpointException;
 use Crehler\InpostPay\Domain\ValueObject\WidgetConfig;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\{ClientException, GuzzleException};
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Token\AccessToken;

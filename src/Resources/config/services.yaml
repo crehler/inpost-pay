@@ -12,7 +12,6 @@ services:
     resource: '../../../src/'
 
   Crehler\InpostPay\Application\Facade\InpostPayFacadeInterface: '@Crehler\InpostPay\Infrastructure\Facade\InpostPayFacade'
-  Crehler\InpostPay\Infrastructure\StoreApi\Abstract\AbstractBasketBindRoute: '@Crehler\InpostPay\Infrastructure\StoreApi\BasketBindRoute'
   Crehler\InpostPay\Infrastructure\StoreApi\Abstract\AbstractBindBasketRoute: '@Crehler\InpostPay\Infrastructure\StoreApi\BindBasketRoute'
 
   Crehler\InpostPay\Infrastructure\StoreApi\BindBasketRoute:
