@@ -57,7 +57,6 @@ readonly class ExceptionHandlerService
             $this->responseBuilder->buildNotFoundResponse(
                 message: $exception->getMessage(),
                 basketId: $resourceId ?? 'unknown',
-                trace: $exception->getTraceAsString()
             ),
             Response::HTTP_NOT_FOUND
         );
@@ -74,7 +73,6 @@ readonly class ExceptionHandlerService
             $this->responseBuilder->buildUnprocessableEntityResponse(
                 $exception->getMessage(),
                 $resourceId ?? 'unknown',
-                $exception->getTraceAsString()
             ),
             Response::HTTP_UNPROCESSABLE_ENTITY
         );
@@ -91,7 +89,6 @@ readonly class ExceptionHandlerService
             $this->responseBuilder->buildUnprocessableEntityResponse(
                 $exception->getMessage(),
                 $resourceId ?? 'unknown',
-                $exception->getTraceAsString()
             ),
             Response::HTTP_UNPROCESSABLE_ENTITY
         );
