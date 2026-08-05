@@ -46,23 +46,21 @@ readonly class InpostApiResponseBuilder
         return $response;
     }
 
-    public function buildNotFoundResponse(string $message, string $basketId, string $trace): array
+    public function buildNotFoundResponse(string $message, string $basketId): array
     {
         return [
             'error' => 'not_found',
             'message' => $message,
             'basket_id' => $basketId,
-            'trace' => $trace,
         ];
     }
 
-    public function buildUnprocessableEntityResponse(string $message, string $basketId, string $trace): array
+    public function buildUnprocessableEntityResponse(string $message, string $basketId): array
     {
         return [
             'error' => 'unprocessable_entity',
             'message' => $message,
             'basket_id' => $basketId,
-            'trace' => $trace,
         ];
     }
 
