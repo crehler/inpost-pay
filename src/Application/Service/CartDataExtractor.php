@@ -29,8 +29,7 @@ use Shopware\Core\Checkout\Cart\Tax\Struct\{CalculatedTaxCollection, TaxRuleColl
 use Shopware\Core\Checkout\Promotion\Aggregate\PromotionDiscount\PromotionDiscountEntity;
 use Shopware\Core\Checkout\Promotion\Cart\{PromotionDeliveryProcessor, PromotionProcessor};
 use Shopware\Core\Checkout\Shipping\SalesChannel\{AbstractShippingMethodRoute, ShippingMethodRoute};
-use Shopware\Core\Content\Product\ProductDefinition;
-use Shopware\Core\Content\Product\ProductEntity;
+use Shopware\Core\Content\Product\{ProductDefinition, ProductEntity};
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
@@ -181,109 +180,6 @@ readonly class CartDataExtractor
         }
 
         return $deliveryOptions;
-    }
-
-    /**
-     * @param BasketProduct[] $products
-     */
-    private function containsDigitalProduct(array $products): bool
-    {
-        foreach ($products as $product) {
-            if ($product->isDigital()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param array<string, \Shopware\Core\Checkout\Shipping\ShippingMethodEntity> $shippingMethodsById
-     */
-    private function resolveBaseDeliveryPrice(
-        Cart $cart,
-        string $baseMethodId,
-        array $shippingMethodsById,
-        SalesChannelContext $context,
-        SalesChannelContext $pricingContext,
-    ): ?Money {
-        // Verify the base method is available first, so a stale cart delivery cannot
-        // "revive" a method that is no longer offered (onlyAvailable list).
-        $shippingMethod = $shippingMethodsById[$baseMethodId] ?? null;
-        if ($shippingMethod === null) {
-            return null;
-        }
-
-        // Same instance = nothing to neutralise; keep the original behaviour.
-        $neutralisedForCod = $pricingContext !== $context;
-
-        $cartMatchingDeliveries = $this->collectCartDeliveriesByShippingMethodIds($cart, [$baseMethodId]);
-
-        if ($cartMatchingDeliveries->count() > 0) {
-            if (!$neutralisedForCod) {
-                $costs = $this->sumDeliveryCosts($cartMatchingDeliveries);
-
-                return Money::fromShopwarePrice(net: $costs['net'], gross: $costs['gross']);
-            }
-
-            // Re-price real deliveries under the non-COD context (cloned, live cart
-            // untouched); keep promotion deliveries (negative cost) as-is so a shipping
-            // discount is not lost - SUEZ-1045.
-            $toReprice = new DeliveryCollection();
-            $promoDeliveries = new DeliveryCollection();
-            foreach ($cartMatchingDeliveries as $delivery) {
-                ($delivery->getShippingCosts()->getTotalPrice() < 0 ? $promoDeliveries : $toReprice)->add($delivery);
-            }
-
-            $deliveries = $this->cloneDeliveriesWithResetCosts($toReprice);
-            $data = new CartDataCollection();
-            $data->set(DeliveryProcessor::buildKey($baseMethodId), $shippingMethod);
-            $this->deliveryCalculator->calculate($data, $cart, $deliveries, $pricingContext);
-
-            // Add promotions back so the discount nets against the repriced base in a
-            // single sum, before sumDeliveryCosts clamps the total to zero.
-            foreach ($promoDeliveries as $promoDelivery) {
-                $deliveries->add($promoDelivery);
-            }
-
-            $costs = $this->sumDeliveryCosts($deliveries);
-
-            return Money::fromShopwarePrice(net: $costs['net'], gross: $costs['gross']);
-        }
-
-        $deliveries = $this->deliveryBuilder->buildByUsingShippingMethod($cart, $shippingMethod, $pricingContext);
-        if ($deliveries->count() === 0) {
-            return null;
-        }
-
-        $data = new CartDataCollection();
-        $data->set(DeliveryProcessor::buildKey($baseMethodId), $shippingMethod);
-        $this->deliveryCalculator->calculate($data, $cart, $deliveries, $pricingContext);
-
-        $this->applyDeliveryPromotions($cart, $deliveries, $data, $pricingContext);
-
-        $costs = $this->sumDeliveryCosts($deliveries);
-
-        return Money::fromShopwarePrice(net: $costs['net'], gross: $costs['gross']);
-    }
-
-    /**
-     * Clones deliveries with zeroed cost so DeliveryCalculator re-matches the price
-     * tier instead of reusing the existing cost; originals stay untouched.
-     */
-    private function cloneDeliveriesWithResetCosts(DeliveryCollection $deliveries): DeliveryCollection
-    {
-        $clones = new DeliveryCollection();
-
-        foreach ($deliveries as $delivery) {
-            $clone = clone $delivery;
-            $clone->setShippingCosts(
-                new CalculatedPrice(0.0, 0.0, new CalculatedTaxCollection(), new TaxRuleCollection())
-            );
-            $clones->add($clone);
-        }
-
-        return $clones;
     }
 
     /**
@@ -537,6 +433,109 @@ readonly class CartDataExtractor
             final: $finalPrice,
             discount: $discountGross !== 0.0 ? round(abs($discountGross), 2) : null,
         );
+    }
+
+    /**
+     * @param BasketProduct[] $products
+     */
+    private function containsDigitalProduct(array $products): bool
+    {
+        foreach ($products as $product) {
+            if ($product->isDigital()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, \Shopware\Core\Checkout\Shipping\ShippingMethodEntity> $shippingMethodsById
+     */
+    private function resolveBaseDeliveryPrice(
+        Cart $cart,
+        string $baseMethodId,
+        array $shippingMethodsById,
+        SalesChannelContext $context,
+        SalesChannelContext $pricingContext,
+    ): ?Money {
+        // Verify the base method is available first, so a stale cart delivery cannot
+        // "revive" a method that is no longer offered (onlyAvailable list).
+        $shippingMethod = $shippingMethodsById[$baseMethodId] ?? null;
+        if ($shippingMethod === null) {
+            return null;
+        }
+
+        // Same instance = nothing to neutralise; keep the original behaviour.
+        $neutralisedForCod = $pricingContext !== $context;
+
+        $cartMatchingDeliveries = $this->collectCartDeliveriesByShippingMethodIds($cart, [$baseMethodId]);
+
+        if ($cartMatchingDeliveries->count() > 0) {
+            if (!$neutralisedForCod) {
+                $costs = $this->sumDeliveryCosts($cartMatchingDeliveries);
+
+                return Money::fromShopwarePrice(net: $costs['net'], gross: $costs['gross']);
+            }
+
+            // Re-price real deliveries under the non-COD context (cloned, live cart
+            // untouched); keep promotion deliveries (negative cost) as-is so a shipping
+            // discount is not lost - SUEZ-1045.
+            $toReprice = new DeliveryCollection();
+            $promoDeliveries = new DeliveryCollection();
+            foreach ($cartMatchingDeliveries as $delivery) {
+                ($delivery->getShippingCosts()->getTotalPrice() < 0 ? $promoDeliveries : $toReprice)->add($delivery);
+            }
+
+            $deliveries = $this->cloneDeliveriesWithResetCosts($toReprice);
+            $data = new CartDataCollection();
+            $data->set(DeliveryProcessor::buildKey($baseMethodId), $shippingMethod);
+            $this->deliveryCalculator->calculate($data, $cart, $deliveries, $pricingContext);
+
+            // Add promotions back so the discount nets against the repriced base in a
+            // single sum, before sumDeliveryCosts clamps the total to zero.
+            foreach ($promoDeliveries as $promoDelivery) {
+                $deliveries->add($promoDelivery);
+            }
+
+            $costs = $this->sumDeliveryCosts($deliveries);
+
+            return Money::fromShopwarePrice(net: $costs['net'], gross: $costs['gross']);
+        }
+
+        $deliveries = $this->deliveryBuilder->buildByUsingShippingMethod($cart, $shippingMethod, $pricingContext);
+        if ($deliveries->count() === 0) {
+            return null;
+        }
+
+        $data = new CartDataCollection();
+        $data->set(DeliveryProcessor::buildKey($baseMethodId), $shippingMethod);
+        $this->deliveryCalculator->calculate($data, $cart, $deliveries, $pricingContext);
+
+        $this->applyDeliveryPromotions($cart, $deliveries, $data, $pricingContext);
+
+        $costs = $this->sumDeliveryCosts($deliveries);
+
+        return Money::fromShopwarePrice(net: $costs['net'], gross: $costs['gross']);
+    }
+
+    /**
+     * Clones deliveries with zeroed cost so DeliveryCalculator re-matches the price
+     * tier instead of reusing the existing cost; originals stay untouched.
+     */
+    private function cloneDeliveriesWithResetCosts(DeliveryCollection $deliveries): DeliveryCollection
+    {
+        $clones = new DeliveryCollection();
+
+        foreach ($deliveries as $delivery) {
+            $clone = clone $delivery;
+            $clone->setShippingCosts(
+                new CalculatedPrice(0.0, 0.0, new CalculatedTaxCollection(), new TaxRuleCollection())
+            );
+            $clones->add($clone);
+        }
+
+        return $clones;
     }
 
     /**

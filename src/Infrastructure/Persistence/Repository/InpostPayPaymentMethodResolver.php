@@ -55,12 +55,6 @@ readonly class InpostPayPaymentMethodResolver
         return $id;
     }
 
-    private function shouldUseCodMethod(?PaymentType $paymentType, ?string $salesChannelId): bool
-    {
-        return $paymentType === PaymentType::CASH_ON_DELIVERY
-            && $this->configProvider->isCodSeparatePaymentMethodEnabled($salesChannelId);
-    }
-
     public function getBasePaymentMethod(Context $context): ?PaymentMethodEntity
     {
         $criteria = new Criteria();
@@ -70,6 +64,12 @@ readonly class InpostPayPaymentMethodResolver
         $paymentMethod = $this->paymentMethodRepository->search($criteria, $context)->first();
 
         return $paymentMethod instanceof PaymentMethodEntity ? $paymentMethod : null;
+    }
+
+    private function shouldUseCodMethod(?PaymentType $paymentType, ?string $salesChannelId): bool
+    {
+        return $paymentType === PaymentType::CASH_ON_DELIVERY
+            && $this->configProvider->isCodSeparatePaymentMethodEnabled($salesChannelId);
     }
 
     private function findActiveMethodId(string $handlerIdentifier, Context $context): ?string
