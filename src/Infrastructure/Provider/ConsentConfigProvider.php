@@ -20,6 +20,7 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 use function is_array;
+use function is_string;
 
 final readonly class ConsentConfigProvider
 {
