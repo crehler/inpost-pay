@@ -149,6 +149,7 @@ readonly class OrderService
             $inpostPayMethodId = $this->paymentMethodResolver->getPaymentMethodId(
                 $tempContext->getContext(),
                 $orderDto->orderDetails->paymentType,
+                $salesChannelId,
             );
 
             $shippingMethodId = $this->deliveryMappingProvider->getShippingMethodIdForDeliveryType(

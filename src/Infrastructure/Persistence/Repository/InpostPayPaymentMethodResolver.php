@@ -13,6 +13,7 @@ namespace Crehler\InpostPay\Infrastructure\Persistence\Repository;
 
 use Crehler\InpostPay\Domain\ValueObject\PaymentType;
 use Crehler\InpostPay\Infrastructure\Checkout\{InpostPayCodPaymentHandler, InpostPayPaymentHandler};
+use Crehler\InpostPay\Infrastructure\Provider\InpostPayConfigProvider;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
@@ -25,20 +26,24 @@ readonly class InpostPayPaymentMethodResolver
 {
     public function __construct(
         private EntityRepository $paymentMethodRepository,
+        private InpostPayConfigProvider $configProvider,
         private LoggerInterface $logger,
     ) {
     }
 
-    public function getPaymentMethodId(Context $context, ?PaymentType $paymentType = null): string
-    {
-        if ($paymentType === PaymentType::CASH_ON_DELIVERY) {
+    public function getPaymentMethodId(
+        Context $context,
+        ?PaymentType $paymentType = null,
+        ?string $salesChannelId = null,
+    ): string {
+        if ($this->shouldUseCodMethod($paymentType, $salesChannelId)) {
             $codMethodId = $this->findActiveMethodId(InpostPayCodPaymentHandler::class, $context);
 
             if ($codMethodId !== null) {
                 return $codMethodId;
             }
 
-            $this->logger->warning('InPost Pay COD payment method not found or inactive, falling back to the default method.');
+            $this->logger->warning('InPost Pay COD payment method enabled in config but not found or inactive, falling back to the default method.');
         }
 
         $id = $this->findActiveMethodId(InpostPayPaymentHandler::class, $context);
@@ -59,6 +64,12 @@ readonly class InpostPayPaymentMethodResolver
         $paymentMethod = $this->paymentMethodRepository->search($criteria, $context)->first();
 
         return $paymentMethod instanceof PaymentMethodEntity ? $paymentMethod : null;
+    }
+
+    private function shouldUseCodMethod(?PaymentType $paymentType, ?string $salesChannelId): bool
+    {
+        return $paymentType === PaymentType::CASH_ON_DELIVERY
+            && $this->configProvider->isCodSeparatePaymentMethodEnabled($salesChannelId);
     }
 
     private function findActiveMethodId(string $handlerIdentifier, Context $context): ?string
