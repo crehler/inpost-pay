@@ -255,7 +255,7 @@ readonly class CartDataExtractor
                 $promoPrice = $price;
             }
 
-            if ($lowestPrice !== null && $promoPrice !== null && $lowestPrice->getGross() < $promoPrice->getGross()) {
+            if ($lowestPrice !== null && $promoPrice !== null && $lowestPrice->getGross() > $promoPrice->getGross()) {
                 $lowestPrice = null;
             }
 
