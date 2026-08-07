@@ -17,6 +17,8 @@ use Crehler\InpostPay\Domain\ValueObject\{HtmlStyles, WidgetConfig, WidgetDispla
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
+use function in_array;
+
 final readonly class InpostPayConfigProvider
 {
     /**
