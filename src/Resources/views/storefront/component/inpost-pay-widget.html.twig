@@ -1,6 +1,7 @@
 {% if inpostPayConfig %}
     {% set inpostPayOptions = {
-        merchantClientId: inpostPayConfig.merchantClientId
+        merchantClientId: inpostPayConfig.merchantClientId,
+        logLevel: inpostPayConfig.jsLogLevel
     } %}
 
     {% if inpostPayConfig.basketBindingApiKey is not empty %}

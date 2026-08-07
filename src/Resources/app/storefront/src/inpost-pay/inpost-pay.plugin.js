@@ -1,5 +1,6 @@
 import Plugin from 'src/plugin-system/plugin.class';
 import InpostPayAnalyticsCapturePlugin from './analytics-capture.plugin';
+import InpostPayLogger from './logger';
 
 export default class InpostPayPlugin extends Plugin {
     static options = {
@@ -11,14 +12,13 @@ export default class InpostPayPlugin extends Plugin {
      * Initialize the InPostPay widget globally (only once per page)
      */
     init() {
-        console.log('[InpostPay] Plugin options:', this.options);
+        InpostPayLogger.debug('Plugin options:', this.options);
 
         // Check if widget is already initialized globally
         if (window.inpostPayWidget) {
-            console.log('[InpostPay] Widget already initialized, skipping...');
+            InpostPayLogger.debug('Widget already initialized, skipping...');
             return;
         }
-        console.log(1)
 
         this._initializeWidget();
 
@@ -34,27 +34,27 @@ export default class InpostPayPlugin extends Plugin {
             || document.querySelector('[data-offcanvas-cart]');
 
           if (!offcanvasTrigger) {
-                  console.warn('[InpostPay] Off-canvas cart trigger element not found');
+                  InpostPayLogger.warning('Off-canvas cart trigger element not found');
                   return;
               }
 
-          console.log('[InpostPay] Found off-canvas cart trigger, attempting to subscribe...');
+          InpostPayLogger.debug('Found off-canvas cart trigger, attempting to subscribe...');
 
           // Get the OffCanvasCart plugin instance from this element
           const pluginInstances = window.PluginManager.getPluginInstancesFromElement(offcanvasTrigger);
           const offcanvasCartPlugin = pluginInstances.get('OffCanvasCart');
 
           if (!offcanvasCartPlugin) {
-                  console.warn('[InpostPay] OffCanvasCart plugin instance not found on trigger element');
+                  InpostPayLogger.warning('OffCanvasCart plugin instance not found on trigger element');
                   return;
               }
 
-          console.log('[InpostPay] Successfully found OffCanvasCart plugin instance, subscribing to offCanvasOpened ' +
+          InpostPayLogger.debug('Successfully found OffCanvasCart plugin instance, subscribing to offCanvasOpened ' +
               'event');
 
           // Subscribe to the offCanvasOpened event
           offcanvasCartPlugin.$emitter.subscribe('offCanvasOpened', () => {
-                  console.log('[InpostPay] Received offCanvasOpened event!');
+                  InpostPayLogger.debug('Received offCanvasOpened event!');
                   this._onOffCanvasOpened();
               });
        }
@@ -65,7 +65,7 @@ export default class InpostPayPlugin extends Plugin {
      */
     _initializeWidget() {
         if (typeof window.InPostPayWidget === 'undefined') {
-            console.warn('[InpostPay] InPostPayWidget is not available yet. Waiting for script to load...');
+            InpostPayLogger.warning('InPostPayWidget is not available yet. Waiting for script to load...');
             this._waitForWidget();
             return;
         }
@@ -92,7 +92,7 @@ export default class InpostPayPlugin extends Plugin {
 
             if (retries >= maxRetries) {
                 clearInterval(checkInterval);
-                console.error('[InpostPay] Failed to load InPostPayWidget after multiple retries');
+                InpostPayLogger.error('Failed to load InPostPayWidget after multiple retries');
             }
         }, 100);
     }
@@ -104,7 +104,7 @@ export default class InpostPayPlugin extends Plugin {
     _initWidgetInstance() {
         // Prevent multiple initializations
         if (window.inpostPayWidget) {
-            console.log('[InpostPay] Widget already initialized');
+            InpostPayLogger.debug('Widget already initialized');
             return;
         }
 
@@ -123,15 +123,15 @@ export default class InpostPayPlugin extends Plugin {
         }
 
         try {
-            console.log('[InpostPay] === Initializing widget ===');
-            console.log('[InpostPay] Init options:', JSON.stringify(options, null, 2));
+            InpostPayLogger.debug('=== Initializing widget ===');
+            InpostPayLogger.debug('Init options:', options);
 
             // Initialize widget globally - it will find all <inpost-izi-button> placeholders in DOM
             window.inpostPayWidget = window.InPostPayWidget.init(options);
 
-            console.log('[InpostPay] Widget initialized successfully');
-            console.log('[InpostPay] Widget instance:', window.inpostPayWidget);
-            console.log('[InpostPay] Widget has refresh method?', typeof window.inpostPayWidget.refresh === 'function');
+            InpostPayLogger.debug('Widget initialized successfully');
+            InpostPayLogger.debug('Widget instance:', window.inpostPayWidget);
+            InpostPayLogger.debug('Widget has refresh method?', typeof window.inpostPayWidget.refresh === 'function');
 
             // Emit custom event for other scripts
             this.$emitter.publish('InpostPayWidgetInitialized', {
@@ -139,8 +139,8 @@ export default class InpostPayPlugin extends Plugin {
                 options: options,
             });
         } catch (error) {
-            console.error('[InpostPay] Failed to initialize widget:', error);
-            console.error('[InpostPay] Error stack:', error.stack);
+            InpostPayLogger.error('Failed to initialize widget:', error);
+            InpostPayLogger.error('Error stack:', error instanceof Error ? error.stack : String(error));
         }
     }
 
@@ -160,7 +160,7 @@ export default class InpostPayPlugin extends Plugin {
 
             if (isVisible) {
                 const bindingPlace = button.getAttribute('binding_place');
-                console.log('[InpostPay] Detected binding_place:', bindingPlace);
+                InpostPayLogger.debug('Detected binding_place:', bindingPlace);
                 return bindingPlace;
             }
         }
@@ -168,12 +168,12 @@ export default class InpostPayPlugin extends Plugin {
         // Fallback: check for product button (has data-product-id)
         const productButton = document.querySelector('inpost-izi-button[data-product-id]');
         if (productButton) {
-            console.log('[InpostPay] Fallback: Found product button');
+            InpostPayLogger.debug('Fallback: Found product button');
             return 'PRODUCT_CARD';
         }
 
         // Default fallback: assume basket context
-        console.log('[InpostPay] Fallback: Assuming BASKET_SUMMARY');
+        InpostPayLogger.debug('Fallback: Assuming BASKET_SUMMARY');
         return 'BASKET_SUMMARY';
     }
 
@@ -184,8 +184,8 @@ export default class InpostPayPlugin extends Plugin {
      * @private
      */
     async _bindBasketWithProduct(productId) {
-        console.log('[InpostPay] Binding basket WITH product');
-        console.log('[InpostPay] Product ID:', productId);
+        InpostPayLogger.debug('Binding basket WITH product');
+        InpostPayLogger.debug('Product ID:', productId);
 
         // Validate productId
         if (!productId || productId === 'unknown' || productId === '0') {
@@ -196,8 +196,8 @@ export default class InpostPayPlugin extends Plugin {
         const quantityInput = document.querySelector('.product-detail-quantity-select, .product-detail-quantity-input');
         const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
 
-        console.log('[InpostPay] Selected quantity:', quantity);
-        console.log('[InpostPay] Calling unified API: /checkout/inpost/basket/bind WITH product');
+        InpostPayLogger.debug('Selected quantity:', quantity);
+        InpostPayLogger.debug('Calling unified API: /checkout/inpost/basket/bind WITH product');
 
         const analytics = InpostPayAnalyticsCapturePlugin.getAnalyticsData();
 
@@ -219,11 +219,11 @@ export default class InpostPayPlugin extends Plugin {
         }
 
         const data = await response.json();
-        console.log('[InpostPay] === API Response received ===');
-        console.log('[InpostPay] Full response data:', JSON.stringify(data, null, 2));
-        console.log('[InpostPay] basketBindingApiKey:', data.basketBindingApiKey);
-        console.log('[InpostPay] basketId:', data.basketId);
-        console.log('[InpostPay] cartItemCount:', data.cartItemCount);
+        InpostPayLogger.debug('=== API Response received ===');
+        InpostPayLogger.debug('Full response data:', data);
+        InpostPayLogger.debug('basketBindingApiKey:', data.basketBindingApiKey);
+        InpostPayLogger.debug('basketId:', data.basketId);
+        InpostPayLogger.debug('cartItemCount:', data.cartItemCount);
 
         // Update cart badge count
         this._updateCartBadge(data.cartItemCount);
@@ -240,8 +240,8 @@ export default class InpostPayPlugin extends Plugin {
      * @private
      */
     async _bindExistingBasket() {
-        console.log('[InpostPay] Binding EXISTING basket (no product)');
-        console.log('[InpostPay] Calling unified API: /checkout/inpost/basket/bind WITHOUT product');
+        InpostPayLogger.debug('Binding EXISTING basket (no product)');
+        InpostPayLogger.debug('Calling unified API: /checkout/inpost/basket/bind WITHOUT product');
 
         const analytics = InpostPayAnalyticsCapturePlugin.getAnalyticsData();
 
@@ -261,9 +261,9 @@ export default class InpostPayPlugin extends Plugin {
         }
 
         const data = await response.json();
-        console.log('[InpostPay] === API Response received ===');
-        console.log('[InpostPay] Full response data:', JSON.stringify(data, null, 2));
-        console.log('[InpostPay] basketBindingApiKey:', data.basketBindingApiKey);
+        InpostPayLogger.debug('=== API Response received ===');
+        InpostPayLogger.debug('Full response data:', data);
+        InpostPayLogger.debug('basketBindingApiKey:', data.basketBindingApiKey);
 
         // Show success notification
         this._showNotification('Koszyk powiązany z InPost Pay', 'success');
@@ -278,9 +278,9 @@ export default class InpostPayPlugin extends Plugin {
      * @private
      */
     async _onUnboundWidgetClicked(productId) {
-        console.log('[InpostPay] === START: Unbound widget clicked ===');
-        console.log('[InpostPay] Received productId parameter:', productId);
-        console.log('[InpostPay] Current basketBindingApiKey:', this.options.basketBindingApiKey);
+        InpostPayLogger.debug('=== START: Unbound widget clicked ===');
+        InpostPayLogger.debug('Received productId parameter:', productId);
+        InpostPayLogger.debug('Current basketBindingApiKey:', this.options.basketBindingApiKey);
 
         try {
             // Show loading state
@@ -288,7 +288,7 @@ export default class InpostPayPlugin extends Plugin {
 
             // Detect context (PRODUCT_CARD, BASKET_SUMMARY, or MINICART_PAGE)
             const context = this._detectButtonContext();
-            console.log('[InpostPay] Context detected:', context);
+            InpostPayLogger.debug('Context detected:', context);
 
             let apiResponse;
 
@@ -305,19 +305,19 @@ export default class InpostPayPlugin extends Plugin {
                 // This includes: MINICART_PAGE, BASKET_SUMMARY, CHECKOUT_PAGE, REGISTERFORM_PAGE
                 // Or PRODUCT_CARD context without valid productId (e.g., clicked from mini-cart overlay)
                 if (context === 'PRODUCT_CARD' && !hasValidProductId) {
-                    console.log('[InpostPay] PRODUCT_CARD context but invalid productId, falling back to bindExistingBasket');
+                    InpostPayLogger.debug('PRODUCT_CARD context but invalid productId, falling back to bindExistingBasket');
                 }
                 apiResponse = await this._bindExistingBasket();
             }
 
-            console.log('[InpostPay] === BEFORE updating options ===');
-            console.log('[InpostPay] OLD this.options.basketBindingApiKey:', this.options.basketBindingApiKey);
+            InpostPayLogger.debug('=== BEFORE updating options ===');
+            InpostPayLogger.debug('OLD this.options.basketBindingApiKey:', this.options.basketBindingApiKey);
 
             // Update widget configuration with new basketBindingApiKey
             this.options.basketBindingApiKey = apiResponse.basketBindingApiKey;
 
-            console.log('[InpostPay] === AFTER updating options ===');
-            console.log('[InpostPay] NEW this.options.basketBindingApiKey:', this.options.basketBindingApiKey);
+            InpostPayLogger.debug('=== AFTER updating options ===');
+            InpostPayLogger.debug('NEW this.options.basketBindingApiKey:', this.options.basketBindingApiKey);
 
             // Emit custom event for other scripts to handle
             this.$emitter.publish('InpostPayUnboundWidgetClicked', {
@@ -326,23 +326,23 @@ export default class InpostPayPlugin extends Plugin {
                 basketBindingApiKey: apiResponse.basketBindingApiKey,
             });
 
-            console.log('[InpostPay] === RETURNING basketBindingApiKey to widget ===');
-            console.log('[InpostPay] Returning:', apiResponse.basketBindingApiKey);
+            InpostPayLogger.debug('=== RETURNING basketBindingApiKey to widget ===');
+            InpostPayLogger.debug('Returning:', apiResponse.basketBindingApiKey);
 
             // Return basketBindingApiKey to InPost widget callback
             return apiResponse.basketBindingApiKey;
 
         } catch (error) {
-            console.error('[InpostPay] === ERROR occurred ===');
-            console.error('[InpostPay] Error:', error);
-            console.error('[InpostPay] Error stack:', error.stack);
+            InpostPayLogger.error('=== ERROR occurred ===');
+            InpostPayLogger.error('Error:', error);
+            InpostPayLogger.error('Error stack:', error instanceof Error ? error.stack : String(error));
             this._showNotification('Nie udało się przetworzyć żądania', 'error');
             throw error;
 
         } finally {
-            console.log('[InpostPay] === FINALLY: Cleanup ===');
+            InpostPayLogger.debug('=== FINALLY: Cleanup ===');
             this._setLoadingState(false);
-            console.log('[InpostPay] === END: Unbound widget clicked ===');
+            InpostPayLogger.debug('=== END: Unbound widget clicked ===');
         }
     }
 
@@ -387,7 +387,7 @@ export default class InpostPayPlugin extends Plugin {
             window.dispatchEvent(event);
         } catch (e) {
             // Fallback to simple alert if FlashMessage not available
-            console.log(`[InpostPay] ${type.toUpperCase()}: ${message}`);
+            InpostPayLogger.debug(`${type.toUpperCase()}: ${message}`);
         }
     }
 
@@ -427,7 +427,7 @@ export default class InpostPayPlugin extends Plugin {
      * @returns {Promise<{bound: boolean, basketBindingApiKey: string|null}>}
      */
     async _checkBindingStatus() {
-        console.log('[InpostPay] Checking binding status...');
+        InpostPayLogger.debug('Checking binding status...');
 
         try {
             const response = await fetch('/checkout/inpost/basket/status', {
@@ -438,19 +438,19 @@ export default class InpostPayPlugin extends Plugin {
             });
 
             if (!response.ok) {
-                console.warn('[InpostPay] Binding status check failed with status:', response.status);
+                InpostPayLogger.warning('Binding status check failed with status:', response.status);
                 return { bound: false, basketBindingApiKey: null };
             }
 
             const data = await response.json();
-            console.log('[InpostPay] Binding status response:', JSON.stringify(data, null, 2));
+            InpostPayLogger.debug('Binding status response:', data);
 
             return {
                 bound: data.bound || false,
                 basketBindingApiKey: data.basketBindingApiKey || null,
             };
         } catch (error) {
-            console.error('[InpostPay] Error checking binding status:', error);
+            InpostPayLogger.error('Error checking binding status:', error);
             return { bound: false, basketBindingApiKey: null };
         }
     }
@@ -461,22 +461,22 @@ export default class InpostPayPlugin extends Plugin {
      * @private
      */
     _resetWidgetState() {
-        console.log('[InpostPay] === Resetting widget state ===');
-        console.log('[InpostPay] Current basketBindingApiKey:', this.options.basketBindingApiKey);
+        InpostPayLogger.debug('=== Resetting widget state ===');
+        InpostPayLogger.debug('Current basketBindingApiKey:', this.options.basketBindingApiKey);
 
         // Clear the basketBindingApiKey from plugin options
         this.options.basketBindingApiKey = null;
 
-        console.log('[InpostPay] Cleared basketBindingApiKey, now null');
+        InpostPayLogger.debug('Cleared basketBindingApiKey, now null');
 
         // Destroy existing widget instance
         if (window.inpostPayWidget) {
-            console.log('[InpostPay] Destroying existing widget instance');
+            InpostPayLogger.debug('Destroying existing widget instance');
             window.inpostPayWidget = null;
         }
 
         // Reinitialize widget without basketBindingApiKey
-        console.log('[InpostPay] Reinitializing widget without basketBindingApiKey');
+        InpostPayLogger.debug('Reinitializing widget without basketBindingApiKey');
         this._initWidgetInstance();
 
         // Emit event for other scripts
@@ -484,7 +484,7 @@ export default class InpostPayPlugin extends Plugin {
             reason: 'cart_reassociation',
         });
 
-        console.log('[InpostPay] === Widget state reset complete ===');
+        InpostPayLogger.debug('=== Widget state reset complete ===');
     }
 
     /**
@@ -494,7 +494,7 @@ export default class InpostPayPlugin extends Plugin {
      * @private
      */
     async _handleBasketEvent(event) {
-        console.log('[InpostPay] Received basket event:', event);
+        InpostPayLogger.debug('Received basket event:', event);
 
         if (event === 'orderCreated') {
             try {
@@ -504,21 +504,21 @@ export default class InpostPayPlugin extends Plugin {
                 });
 
                 if (!response.ok) {
-                    console.error('[InpostPay] Failed to get confirmation URL, status:', response.status);
+                    InpostPayLogger.error('Failed to get confirmation URL, status:', response.status);
                     return false;
                 }
 
                 const data = await response.json();
 
                 if (data.url) {
-                    console.log('[InpostPay] Redirecting to finish page:', data.url);
+                    InpostPayLogger.debug('Redirecting to finish page:', data.url);
                     window.location.href = data.url;
                     return true; // Prevent widget from refreshing page
                 }
 
-                console.warn('[InpostPay] No URL in response, allowing page refresh');
+                InpostPayLogger.warning('No URL in response, allowing page refresh');
             } catch (error) {
-                console.error('[InpostPay] Error handling orderCreated event:', error);
+                InpostPayLogger.error('Error handling orderCreated event:', error);
             }
         }
 
@@ -532,10 +532,10 @@ export default class InpostPayPlugin extends Plugin {
      * @private
      */
     async _onOffCanvasOpened() {
-        console.log('[InpostPay] Off-canvas cart opened, checking binding status...');
+        InpostPayLogger.debug('Off-canvas cart opened, checking binding status...');
 
         if (!window.inpostPayWidget) {
-            console.warn('[InpostPay] Widget not initialized yet when off-canvas opened');
+            InpostPayLogger.warning('Widget not initialized yet when off-canvas opened');
             return;
         }
 
@@ -549,30 +549,30 @@ export default class InpostPayPlugin extends Plugin {
         const backendSaysUnbound = !status.bound;
 
         if (frontendHasBinding && backendSaysUnbound) {
-            console.log('[InpostPay] Widget state reset after desync');
-            console.log('[InpostPay] Frontend had basketBindingApiKey:', this.options.basketBindingApiKey);
-            console.log('[InpostPay] Backend says bound:', status.bound);
+            InpostPayLogger.debug('Widget state reset after desync');
+            InpostPayLogger.debug('Frontend had basketBindingApiKey:', this.options.basketBindingApiKey);
+            InpostPayLogger.debug('Backend says bound:', status.bound);
             this._resetWidgetState();
 
             // After reset, refresh widget to render buttons in dynamically loaded content (offcanvas)
             if (window.inpostPayWidget && typeof window.inpostPayWidget.refresh === 'function') {
                 window.inpostPayWidget.refresh();
-                console.log('[InpostPay] Widget refreshed after state reset');
+                InpostPayLogger.debug('Widget refreshed after state reset');
             }
             return;
         }
 
         // Normal case: just refresh widget for new DOM elements
         if (typeof window.inpostPayWidget.refresh !== 'function') {
-            console.warn('[InpostPay] Widget refresh method not available');
+            InpostPayLogger.warning('Widget refresh method not available');
             return;
         }
 
         try {
             window.inpostPayWidget.refresh();
-            console.log('[InpostPay] Widget refreshed successfully for off-canvas cart');
+            InpostPayLogger.debug('Widget refreshed successfully for off-canvas cart');
         } catch (error) {
-            console.error('[InpostPay] Error refreshing widget:', error);
+            InpostPayLogger.error('Error refreshing widget:', error);
         }
     }
 

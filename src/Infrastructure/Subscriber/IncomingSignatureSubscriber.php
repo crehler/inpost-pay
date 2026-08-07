@@ -13,7 +13,7 @@ namespace Crehler\InpostPay\Infrastructure\Subscriber;
 
 use Crehler\InpostPay\Application\Service\IncomingRsaSignatureValidator;
 use Crehler\InpostPay\Domain\Exception\InvalidIncomingSignatureException;
-use Crehler\InpostPay\Infrastructure\Logger\ExtendedLogger;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\{JsonResponse, Response};
 use Symfony\Component\HttpKernel\Event\{ControllerEvent, ExceptionEvent};
@@ -34,7 +34,7 @@ final readonly class IncomingSignatureSubscriber implements EventSubscriberInter
 
     public function __construct(
         private IncomingRsaSignatureValidator $validator,
-        private ExtendedLogger $extendedLogger,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -72,7 +72,7 @@ final readonly class IncomingSignatureSubscriber implements EventSubscriberInter
             requestBody: $request->getContent(),
         );
 
-        $this->extendedLogger->debug('Incoming RSA signature verified', [
+        $this->logger->debug('Incoming RSA signature verified', [
             'path' => $path,
             'key_version' => $headers['x-public-key-ver'],
         ]);

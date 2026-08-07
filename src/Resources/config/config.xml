@@ -80,15 +80,41 @@
             <helpText lang="de-DE">Ihr InPostPay Händler-Geheimnis zur Webhook-Signaturvalidierung (vertraulich behandeln)</helpText>
         </input-field>
 
-        <input-field type="checkbox">
-            <name>extendedLogging</name>
-            <label>Enable Extended Logging (Debug)</label>
-            <label lang="pl-PL">Włącz rozszerzone logowanie (debug)</label>
-            <label lang="de-DE">Erweiterte Protokollierung aktivieren (Debug)</label>
-            <helpText>When enabled, logs detailed entry-point info (controllers, basket loading) to var/log/inpostpay_*.log. Disable in production.</helpText>
-            <helpText lang="pl-PL">Po włączeniu loguje szczegółowe informacje wejściowe do var/log/inpostpay_*.log. Wyłącz na produkcji.</helpText>
-            <helpText lang="de-DE">Aktiviert detaillierte Eintrittspunkt-Logs in var/log/inpostpay_*.log. In Produktion deaktivieren.</helpText>
-            <defaultValue>false</defaultValue>
+        <input-field type="single-select">
+            <name>logLevel</name>
+            <label>Log Level</label>
+            <label lang="pl-PL">Poziom logowania</label>
+            <label lang="de-DE">Protokollierungsstufe</label>
+            <helpText>Minimum severity written to var/log/inpostpay_*.log and to the browser console. "Info" keeps order/basket events; "Debug" adds full entry-point tracing and raw InPost payloads (known personal-data fields are masked automatically). Use "Error" for the quietest logs.</helpText>
+            <helpText lang="pl-PL">Minimalny poziom zapisywany do var/log/inpostpay_*.log oraz do konsoli przeglądarki. "Info" zachowuje zdarzenia zamówień/koszyka; "Debug" dodaje pełne śledzenie wejść do metod i surowe payloady InPost (znane pola danych osobowych są maskowane automatycznie). "Error" dla najcichszych logów.</helpText>
+            <helpText lang="de-DE">Minimale Stufe, die in var/log/inpostpay_*.log und in der Browserkonsole protokolliert wird. "Info" behält Bestell-/Warenkorbereignisse; "Debug" fügt vollständiges Tracing und rohe InPost-Payloads hinzu (bekannte personenbezogene Datenfelder werden automatisch maskiert). "Error" für die leiseste Protokollierung.</helpText>
+            <options>
+                <option>
+                    <id>error</id>
+                    <name>Error</name>
+                    <name lang="pl-PL">Błąd</name>
+                    <name lang="de-DE">Fehler</name>
+                </option>
+                <option>
+                    <id>warning</id>
+                    <name>Warning</name>
+                    <name lang="pl-PL">Ostrzeżenie</name>
+                    <name lang="de-DE">Warnung</name>
+                </option>
+                <option>
+                    <id>info</id>
+                    <name>Info</name>
+                    <name lang="pl-PL">Informacja</name>
+                    <name lang="de-DE">Info</name>
+                </option>
+                <option>
+                    <id>debug</id>
+                    <name>Debug</name>
+                    <name lang="pl-PL">Debug</name>
+                    <name lang="de-DE">Debug</name>
+                </option>
+            </options>
+            <defaultValue>info</defaultValue>
         </input-field>
 
     </card>

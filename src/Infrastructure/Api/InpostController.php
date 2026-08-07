@@ -16,7 +16,6 @@ use Crehler\InpostPay\Application\Facade\InpostPayFacadeInterface;
 use Crehler\InpostPay\Application\Service\BasketService;
 use Crehler\InpostPay\Domain\Exception\{InpostPayEndpointException, InvalidWebhookSignatureException, OrderNotFoundException};
 use Crehler\InpostPay\Infrastructure\Api\Builder\InpostApiResponseBuilder;
-use Crehler\InpostPay\Infrastructure\Logger\ExtendedLogger;
 use Crehler\InpostPay\Infrastructure\Serializer\RequestDeserializer;
 use Crehler\InpostPay\Infrastructure\Service\ExceptionHandlerService;
 use InvalidArgumentException;
@@ -29,7 +28,11 @@ use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
-use function json_encode;
+use function array_is_list;
+use function get_debug_type;
+use function is_array;
+use function json_decode;
+use function json_last_error;
 use function strlen;
 
 #[Route(defaults: [PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [ApiRouteScope::ID]])]
@@ -41,7 +44,6 @@ final class InpostController extends AbstractController
         private readonly RequestDeserializer $deserializer,
         private readonly InpostPayFacadeInterface $inpostPayFacade,
         private readonly ExceptionHandlerService $exceptionHandler,
-        private readonly ExtendedLogger $extendedLogger,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -62,7 +64,7 @@ final class InpostController extends AbstractController
         string $basketId,
         Request $request,
     ): JsonResponse {
-        $this->extendedLogger->debugForBasket($basketId, 'InpostController: confirmBasket');
+        $this->logger->debug('Received basket confirmation from InPost', ['basket_id' => $basketId]);
 
         try {
             $data = $this->deserializer->decodeRequest($request);
@@ -100,7 +102,7 @@ final class InpostController extends AbstractController
     public function getBasket(
         string $basketId,
     ): JsonResponse {
-        $this->extendedLogger->debugForBasket($basketId, 'InpostController: getBasket');
+        $this->logger->debug('InPost requested current basket data', ['basket_id' => $basketId]);
 
         try {
             $basketData = $this->inpostPayFacade->getBasketData($basketId);
@@ -131,10 +133,7 @@ final class InpostController extends AbstractController
     public function deleteBasket(
         string $basketId,
     ): JsonResponse {
-        $this->extendedLogger->debugForBasket($basketId, 'InpostController: deleteBasket');
-        $this->logger->info('[SUEZ-1045-CTRL] InpostController::deleteBasket - received DELETE notification from InPost, will only run local cleanup', [
-            'basket_id' => $basketId,
-        ]);
+        $this->logger->debug('Received DELETE notification from InPost, running local cleanup only', ['basket_id' => $basketId]);
 
         // InPost calls this endpoint *after* it has already removed the binding
         // on its side (widget-initiated unbind or "remove basket" from the
@@ -169,18 +168,10 @@ final class InpostController extends AbstractController
         string $basketId,
         Request $request,
     ): JsonResponse {
-        $this->extendedLogger->debugForBasket($basketId, 'InpostController: handleBasketEvent');
+        $this->logger->debug('Received basket event from InPost', ['basket_id' => $basketId]);
 
         try {
             $data = $this->deserializer->decodeRequest($request);
-
-            // [IN-50-DIAG] Log raw incoming event payload to capture the exact wire
-            // format InPost sends for PROMO_CODES (esp. the action field for removals).
-            $this->extendedLogger->infoForBasket($basketId, '[IN-50-DIAG] Incoming basket event raw payload', [
-                'event_type' => $data['event_type'] ?? null,
-                'raw' => $data,
-            ]);
-
             $eventDto = BasketEventDto::fromArray($data);
 
             $basketData = $this->inpostPayFacade->handleBasketEvent(
@@ -214,7 +205,7 @@ final class InpostController extends AbstractController
     public function updateBasket(
         string $basketId,
     ): JsonResponse {
-        $this->extendedLogger->debugForBasket($basketId, 'InpostController: updateBasket');
+        $this->logger->debug('Received basket update request from InPost', ['basket_id' => $basketId]);
 
         try {
             $response = $this->inpostPayFacade->updateBasket($basketId);
@@ -245,8 +236,10 @@ final class InpostController extends AbstractController
     public function createOrder(
         Request $request,
     ): JsonResponse {
-        $this->extendedLogger->debug('InpostController: createOrder', [
-            'payload_size' => strlen($request->getContent()),
+        $rawBody = $request->getContent();
+        $this->logger->debug('Received order creation request from InPost', [
+            'payload_size' => strlen($rawBody),
+            'raw_body' => $this->decodeForLog($rawBody),
         ]);
 
         try {
@@ -279,7 +272,7 @@ final class InpostController extends AbstractController
     public function getOrder(
         string $orderId,
     ): JsonResponse {
-        $this->extendedLogger->debug('InpostController: getOrder', ['orderId' => $orderId]);
+        $this->logger->debug('InPost requested order details', ['order_id' => $orderId]);
 
         try {
             $response = $this->inpostPayFacade->getOrder($orderId);
@@ -314,7 +307,7 @@ final class InpostController extends AbstractController
         string $orderId,
         Request $request,
     ): JsonResponse {
-        $this->extendedLogger->debug('InpostController: handleOrderEvent', ['orderId' => $orderId]);
+        $this->logger->debug('Received order event from InPost', ['order_id' => $orderId]);
 
         try {
             $data = $this->deserializer->decodeRequest($request);
@@ -352,7 +345,7 @@ final class InpostController extends AbstractController
     )]
     public function handleWebhook(Request $request): JsonResponse
     {
-        $this->extendedLogger->debug('InpostController: handleWebhook', [
+        $this->logger->debug('Received webhook from InPost', [
             'api_version' => $request->headers->get('X-API-Version'),
             'has_signature' => $request->headers->has('X-Signature'),
         ]);
@@ -399,7 +392,7 @@ final class InpostController extends AbstractController
     )]
     public function getTransactions(Request $request): JsonResponse
     {
-        $this->extendedLogger->debug('InpostController: getTransactions', [
+        $this->logger->debug('Fetching transactions for admin panel', [
             'query' => $request->query->all(),
         ]);
 
@@ -427,7 +420,7 @@ final class InpostController extends AbstractController
     )]
     public function requestRefund(string $transactionId, Request $request): JsonResponse
     {
-        $this->extendedLogger->debug('InpostController: requestRefund', ['transactionId' => $transactionId]);
+        $this->logger->debug('Processing refund request from admin panel', ['transaction_id' => $transactionId]);
 
         try {
             $refundDto = RefundRequestDto::fromRequest($transactionId, $request, $this->deserializer);
@@ -452,10 +445,35 @@ final class InpostController extends AbstractController
 
     private function logOutgoingBasketPayload(string $basketId, string $endpoint, mixed $payload): void
     {
-        $this->logger->info('[SUEZ-1072-DEBUG] Outgoing basket payload to InPost', [
-            'basketId' => $basketId,
+        $this->logger->debug('Sending outgoing basket payload to InPost', [
+            'basket_id' => $basketId,
             'endpoint' => $endpoint,
-            'payload_json' => json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'payload' => $payload,
         ]);
+    }
+
+    /**
+     * Decodes a raw JSON request body into an array so the logger's PII redaction can walk
+     * it; returns only a JSON error marker when the body isn't valid JSON, and only a type
+     * marker when it decodes to a scalar or list (the redactor can't mask those safely).
+     */
+    private function decodeForLog(string $rawBody): mixed
+    {
+        if ($rawBody === '') {
+            return '';
+        }
+
+        $decoded = json_decode($rawBody, true);
+        $jsonError = json_last_error();
+
+        if ($jsonError !== JSON_ERROR_NONE) {
+            return ['invalid_json' => true, 'json_error' => $jsonError];
+        }
+
+        if (!is_array($decoded) || array_is_list($decoded)) {
+            return ['payload_type' => get_debug_type($decoded)];
+        }
+
+        return $decoded;
     }
 }
