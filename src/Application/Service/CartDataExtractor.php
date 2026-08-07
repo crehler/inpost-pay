@@ -189,9 +189,11 @@ readonly class CartDataExtractor
     }
 
     /**
+     * @param BasketProduct[] $products
+     *
      * @return PromoCode[]
      */
-    public function extractPromoCodes(Cart $cart): array
+    public function extractPromoCodes(Cart $cart, array $products): array
     {
         $promoLineItems = $cart->getLineItems()->filterType(LineItem::PROMOTION_LINE_ITEM_TYPE);
         $promoCodes = [];
@@ -208,6 +210,14 @@ readonly class CartDataExtractor
             );
         }
 
+        if ($this->hasOmnibusRelevantDiscount($products)) {
+            $promoCodes[] = new PromoCode(
+                name: 'Obniżka cenowa produktu',
+                promoCodeValue: 'RABAT',
+                regulationType: 'OMNIBUS',
+            );
+        }
+
         return $promoCodes;
     }
 
@@ -216,6 +226,7 @@ readonly class CartDataExtractor
         $productLineItems = $cart->getLineItems()->filterType(LineItem::PRODUCT_LINE_ITEM_TYPE);
         $productIds = array_filter($productLineItems->getReferenceIds());
         $productData = $this->loadProductData($productIds, $context);
+        $lineItemDiscounts = $this->collectLineItemDiscounts($cart);
 
         $products = [];
 
@@ -257,10 +268,25 @@ readonly class CartDataExtractor
             $basePrice = $price;
             $promoPrice = null;
             $listPrice = $calculatedPrice?->getListPrice();
-            if ($listPrice !== null && $listPrice->getPrice() > $unitGrossPrice) {
+            $lineItemDiscount = $lineItemDiscounts[$lineItem->getId()] ?? 0.0;
+            $hasListPrice = $listPrice !== null && $listPrice->getPrice() > $unitGrossPrice;
+
+            if ($hasListPrice) {
                 $listGross = $listPrice->getPrice();
                 $basePrice = Money::fromShopwarePrice(net: $listGross * $netRatio, gross: $listGross);
-                $promoPrice = $price;
+            }
+
+            if ($hasListPrice || $lineItemDiscount > 0.0) {
+                $discountedUnitGross = $unitGrossPrice;
+                if ($lineItemDiscount > 0.0 && $quantity > 0) {
+                    $discountedUnitGross -= $lineItemDiscount / $quantity;
+                }
+
+                $promoPrice = Money::fromShopwarePrice(net: $discountedUnitGross * $netRatio, gross: $discountedUnitGross);
+            }
+
+            if ($promoPrice === null) {
+                $lowestPrice = null;
             }
 
             $deliveryInfo = $lineItem->getDeliveryInformation();
@@ -438,6 +464,54 @@ readonly class CartDataExtractor
             final: $finalPrice,
             discount: $discountGross !== 0.0 ? round(abs($discountGross), 2) : null,
         );
+    }
+
+    /**
+     * @param BasketProduct[] $products
+     */
+    private function hasOmnibusRelevantDiscount(array $products): bool
+    {
+        foreach ($products as $product) {
+            if ($product->hasPromotion() && $product->hasOmnibusPrice()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Shopware represents a cart-wide/scoped promotion as its own line item, not by
+     * modifying each affected product line item's own price - the discount each
+     * product actually receives from a given promotion is recorded in that promotion
+     * line item's own "composition" payload (native Shopware promotion-processing
+     * data, not something this plugin writes). Sum it per affected line item ID so
+     * extractProducts() can fold it into promo_price.
+     *
+     * @return array<string, float> lineItemId => total gross discount
+     */
+    private function collectLineItemDiscounts(Cart $cart): array
+    {
+        $discounts = [];
+
+        $promotionLineItems = $cart->getLineItems()->filterType(LineItem::PROMOTION_LINE_ITEM_TYPE);
+        foreach ($promotionLineItems as $promotionLineItem) {
+            $composition = $promotionLineItem->getPayloadValue('composition');
+            if (!is_array($composition)) {
+                continue;
+            }
+
+            foreach ($composition as $entry) {
+                if (!isset($entry['id'], $entry['discount'])) {
+                    continue;
+                }
+
+                $lineItemId = $entry['id'];
+                $discounts[$lineItemId] = ($discounts[$lineItemId] ?? 0.0) + (float) $entry['discount'];
+            }
+        }
+
+        return $discounts;
     }
 
     /**

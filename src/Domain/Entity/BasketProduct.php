@@ -191,8 +191,5 @@ readonly class BasketProduct
         if ($this->promoPrice !== null && $this->promoPrice->getGross() > $this->basePrice->getGross()) {
             throw new InvalidArgumentException('Promo price cannot be higher than base price');
         }
-        if ($this->lowestPrice !== null && $this->lowestPrice->getGross() < $this->promoPrice?->getGross()) {
-            throw new InvalidArgumentException('Lowest price cannot be lower than promo price');
-        }
     }
 }
