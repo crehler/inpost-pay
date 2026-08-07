@@ -41,7 +41,8 @@ use Shopware\Core\Checkout\Cart\Tax\Struct\CalculatedTaxCollection;
 use Shopware\Core\Checkout\Cart\Tax\Struct\TaxRuleCollection;
 use Shopware\Core\Checkout\Promotion\Cart\PromotionDeliveryProcessor;
 use Shopware\Core\Checkout\Shipping\SalesChannel\AbstractShippingMethodRoute;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Content\Product\SalesChannel\Price\AbstractProductPriceCalculator;
+use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 final class CartDataExtractorTest extends TestCase
@@ -381,7 +382,8 @@ final class CartDataExtractorTest extends TestCase
         return new CartDataExtractor(
             $this->createMock(InpostPayConfigProvider::class),
             $this->createMock(CashRounding::class),
-            $this->createMock(EntityRepository::class),
+            $this->createMock(SalesChannelRepository::class),
+            $this->createMock(AbstractProductPriceCalculator::class),
             $this->createMock(DeliveryMappingProvider::class),
             $this->createMock(AbstractShippingMethodRoute::class),
             $this->createMock(DeliveryBuilder::class),
@@ -392,6 +394,7 @@ final class CartDataExtractorTest extends TestCase
             $this->createMock(ProductUrlGenerator::class),
             $this->createMock(BasePricingContextFactory::class),
             $this->createMock(LoggerInterface::class),
+            30,
         );
     }
 
@@ -402,7 +405,8 @@ final class CartDataExtractorTest extends TestCase
         return new CartDataExtractor(
             $this->createMock(InpostPayConfigProvider::class),
             $this->createMock(CashRounding::class),
-            $this->createMock(EntityRepository::class),
+            $this->createMock(SalesChannelRepository::class),
+            $this->createMock(AbstractProductPriceCalculator::class),
             $this->createMock(DeliveryMappingProvider::class),
             $this->createMock(AbstractShippingMethodRoute::class),
             $deliveryBuilder ?? $this->createMock(DeliveryBuilder::class),
@@ -413,6 +417,7 @@ final class CartDataExtractorTest extends TestCase
             $this->createMock(ProductUrlGenerator::class),
             $this->createMock(BasePricingContextFactory::class),
             $this->createMock(LoggerInterface::class),
+            30,
         );
     }
 

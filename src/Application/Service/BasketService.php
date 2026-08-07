@@ -17,7 +17,7 @@ use Crehler\InpostPay\Application\Facade\InpostPayFacadeInterface;
 use Crehler\InpostPay\Domain\Aggregate\InpostBasket;
 use Crehler\InpostPay\Domain\Exception\{BasketSessionNotFoundException, InvalidBasketException, InvalidPhoneNumberException, OrphanedBasketSessionException, UnsupportedEventTypeException};
 use Crehler\InpostPay\Domain\ValueObject\{BasketConfirmationStatus, BrowserInfo, PhoneNumber};
-use Crehler\InpostPay\Infrastructure\Logger\{ExceptionLogger, ExtendedLogger};
+use Crehler\InpostPay\Infrastructure\Logger\ExceptionLogger;
 use DateTimeImmutable;
 use DomainException;
 use Exception;
@@ -40,13 +40,12 @@ readonly class BasketService
         private ExceptionLogger $exceptionLogger,
         private ConsentService $consentService,
         private LoggerInterface $logger,
-        private ExtendedLogger $extendedLogger,
     ) {
     }
 
     public function loadBasketData(string $basketId): InpostBasket
     {
-        $this->extendedLogger->debugForBasket($basketId, 'BasketService: loadBasketData');
+        $this->logger->debug('Loading basket data', ['basket_id' => $basketId]);
 
         try {
             $cart = $this->cartOperationService->loadCartByBasketId($basketId);

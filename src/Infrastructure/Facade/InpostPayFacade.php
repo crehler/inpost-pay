@@ -20,7 +20,7 @@ use Crehler\InpostPay\Domain\ValueObject\Analytics\BasketAnalytics;
 use Crehler\InpostPay\Domain\ValueObject\{WebhookResult, WidgetConfig};
 use Crehler\InpostPay\Infrastructure\Api\Builder\InpostApiResponseBuilder;
 use Crehler\InpostPay\Infrastructure\Client\InpostPayClient;
-use Crehler\InpostPay\Infrastructure\Logger\{ExceptionLogger, ExtendedLogger};
+use Crehler\InpostPay\Infrastructure\Logger\ExceptionLogger;
 use Crehler\InpostPay\Infrastructure\Provider\InpostPayConfigProvider;
 use DateTimeImmutable;
 use DomainException;
@@ -57,7 +57,6 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
         private ExceptionLogger $exceptionLogger,
         private WebhookService $webhookService,
         private RefundService $refundService,
-        private ExtendedLogger $extendedLogger,
     ) {
     }
 
@@ -68,7 +67,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function getBasketData(string $basketId): array
     {
-        $this->extendedLogger->debugForBasket($basketId, 'Facade: getBasketData');
+        $this->logger->debug('Loading basket data for InPost', ['basket_id' => $basketId]);
 
         try {
             $basket = $this->basketService->loadBasketData($basketId);
@@ -88,7 +87,8 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
         SalesChannelContext $context,
         ?Request $request = null,
     ): array {
-        $this->extendedLogger->debugForBasket($context->getToken(), 'Facade: bindBasketWithProduct', [
+        $this->logger->debug('Binding basket with a single product', [
+            'basket_id' => $context->getToken(),
             'product_id' => $productId,
             'quantity' => $quantity,
         ]);
@@ -152,7 +152,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
     {
         $basketId = $context->getToken();
 
-        $this->extendedLogger->debugForBasket($basketId, 'Facade: bindBasket');
+        $this->logger->debug('Binding the current cart as a basket', ['basket_id' => $basketId]);
 
         $cart = $this->cartService->getCart($basketId, $context);
 
@@ -195,7 +195,8 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function handleBasketEvent(string $basketId, BasketEventDto $eventDto): array
     {
-        $this->extendedLogger->debugForBasket($basketId, 'Facade: handleBasketEvent', [
+        $this->logger->debug('Handling basket event', [
+            'basket_id' => $basketId,
             'event_type' => $eventDto->eventType->value,
         ]);
 
@@ -238,7 +239,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
      */
     public function desynchronizeBasket(string $basketId): void
     {
-        $this->extendedLogger->debugForBasket($basketId, 'Facade: desynchronizeBasket');
+        $this->logger->debug('Desynchronizing basket from InPost', ['basket_id' => $basketId]);
 
         try {
             $session = $this->basketSessionService->getSessionByBasketId($basketId);
@@ -287,7 +288,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function desynchronizeBasketLocally(string $basketId): void
     {
-        $this->extendedLogger->debugForBasket($basketId, 'Facade: desynchronizeBasketLocally - local cleanup only, no DELETE to InPost');
+        $this->logger->debug('Cleaning up local basket state only, not notifying InPost', ['basket_id' => $basketId]);
 
         try {
             $session = $this->basketSessionService->getSessionByBasketId($basketId);
@@ -319,7 +320,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
      */
     public function updateBasket(string $basketId): array
     {
-        $this->extendedLogger->debugForBasket($basketId, 'Facade: updateBasket');
+        $this->logger->debug('Updating basket in InPost', ['basket_id' => $basketId]);
 
         try {
             $session = $this->basketSessionService->getSessionByBasketId($basketId);
@@ -350,7 +351,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function createOrder(CreateOrderDto $orderDto): array
     {
-        $this->extendedLogger->debug('Facade: createOrder', [
+        $this->logger->debug('Creating order from basket', [
             'basket_id' => $orderDto->orderDetails->basketId,
         ]);
 
@@ -396,7 +397,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function getOrder(string $orderId): array
     {
-        $this->extendedLogger->debug('Facade: getOrder', ['order_id' => $orderId]);
+        $this->logger->debug('Loading order details', ['order_id' => $orderId]);
 
         try {
             $order = $this->orderService->getOrderById($orderId);
@@ -414,7 +415,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function handleOrderEvent(string $orderId, OrderEventDto $eventDto): array
     {
-        $this->extendedLogger->debug('Facade: handleOrderEvent', [
+        $this->logger->debug('Handling order event', [
             'order_id' => $orderId,
             'event_id' => $eventDto->eventId,
         ]);
@@ -450,7 +451,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function pushOrderUpdate(string $orderId, OrderUpdateNotificationDto $dto): void
     {
-        $this->extendedLogger->debug('Facade: pushOrderUpdate', [
+        $this->logger->debug('Pushing order update to InPost', [
             'order_id' => $orderId,
             'event_id' => $dto->eventId,
         ]);
@@ -476,7 +477,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function processWebhook(WebhookPayloadDto $dto): WebhookResult
     {
-        $this->extendedLogger->debug('Facade: processWebhook', [
+        $this->logger->debug('Processing webhook payload', [
             'event_type' => $dto->eventType->value,
             'api_version' => $dto->apiVersion,
         ]);
@@ -510,7 +511,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function getTransactions(TransactionQueryDto $query): TransactionResponseDto
     {
-        $this->extendedLogger->debug('Facade: getTransactions', [
+        $this->logger->debug('Fetching transactions from InPost via facade', [
             'page' => $query->page,
             'order_id' => $query->orderId,
         ]);
@@ -544,7 +545,7 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
 
     public function requestRefund(RefundRequestDto $dto): RefundResponseDto
     {
-        $this->extendedLogger->debug('Facade: requestRefund', [
+        $this->logger->debug('Processing refund request via facade', [
             'transaction_id' => $dto->transactionId,
         ]);
 

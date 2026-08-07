@@ -15,7 +15,7 @@ use Crehler\InpostPay\Application\Facade\InpostPayFacadeInterface;
 use Crehler\InpostPay\Application\Service\InpostBasketSessionService;
 use Crehler\InpostPay\Domain\Cart\Error\EmptyCartError;
 use Crehler\InpostPay\Domain\Exception\{EmptyCartException, InpostPayEndpointException};
-use Crehler\InpostPay\Infrastructure\Logger\{ExceptionLogger, ExtendedLogger};
+use Crehler\InpostPay\Infrastructure\Logger\ExceptionLogger;
 use Crehler\InpostPay\Infrastructure\StoreApi\Abstract\AbstractBindBasketRoute;
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -32,7 +32,6 @@ final class BindBasketRoute extends AbstractBindBasketRoute
         private readonly InpostBasketSessionService $basketSessionService,
         private readonly LoggerInterface $logger,
         private readonly ExceptionLogger $exceptionLogger,
-        private readonly ExtendedLogger $extendedLogger,
     ) {
     }
 
@@ -49,7 +48,8 @@ final class BindBasketRoute extends AbstractBindBasketRoute
     )]
     public function bindBasket(Request $request, SalesChannelContext $context): JsonResponse
     {
-        $this->extendedLogger->debugForBasket($context->getToken(), 'StoreApi: bindBasket', [
+        $this->logger->debug('Received basket bind request from the storefront', [
+            'basket_id' => $context->getToken(),
             'has_product_id' => (bool) $request->request->get('productId'),
         ]);
 
@@ -64,7 +64,7 @@ final class BindBasketRoute extends AbstractBindBasketRoute
             return $this->bindExistingBasket($context, $request);
         } catch (Exception $e) {
             $this->exceptionLogger->error('Unexpected error during basket binding', $e, [
-                'basketId' => $context->getToken(),
+                'basket_id' => $context->getToken(),
                 'productId' => $request->request->get('productId'),
                 'quantity' => (int) ($request->request->get('quantity') ?? 1),
             ]);
@@ -85,7 +85,7 @@ final class BindBasketRoute extends AbstractBindBasketRoute
     {
         $basketId = $context->getToken();
 
-        $this->extendedLogger->debugForBasket($basketId, 'StoreApi: getBindingStatus');
+        $this->logger->debug('Checking basket binding status', ['basket_id' => $basketId]);
 
         $session = $this->basketSessionService->getSessionByBasketId($basketId);
 
@@ -112,7 +112,7 @@ final class BindBasketRoute extends AbstractBindBasketRoute
     {
         $basketId = $context->getToken();
 
-        $this->extendedLogger->debugForBasket($basketId, 'StoreApi: getOrderConfirmationUrl');
+        $this->logger->debug('Resolving order confirmation URL for basket', ['basket_id' => $basketId]);
 
         $session = $this->basketSessionService->getSessionByBasketId($basketId);
 
@@ -142,7 +142,7 @@ final class BindBasketRoute extends AbstractBindBasketRoute
             );
 
             $this->logger->info('Basket binding with product successful', [
-                'basketId' => $result['basketId'],
+                'basket_id' => $result['basketId'],
                 'productId' => $productId,
                 'quantity' => $quantity,
             ]);
@@ -167,14 +167,14 @@ final class BindBasketRoute extends AbstractBindBasketRoute
             $result = $this->inpostPayFacade->bindBasket($context, $request);
 
             $this->logger->info('Existing basket binding successful', [
-                'basketId' => $result['basketId'],
+                'basket_id' => $result['basketId'],
                 'cartItemCount' => $result['cartItemCount'],
             ]);
 
             return new JsonResponse($result);
         } catch (EmptyCartException $e) {
             $this->exceptionLogger->warning('Attempted to bind empty cart', $e, [
-                'basketId' => $context->getToken(),
+                'basket_id' => $context->getToken(),
             ]);
 
             $cartError = new EmptyCartError($context->getToken());
@@ -186,7 +186,7 @@ final class BindBasketRoute extends AbstractBindBasketRoute
             ], Response::HTTP_BAD_REQUEST);
         } catch (InpostPayEndpointException $e) {
             $this->exceptionLogger->error('InPost API error during existing basket binding', $e, [
-                'basketId' => $context->getToken(),
+                'basket_id' => $context->getToken(),
             ]);
 
             return new JsonResponse([

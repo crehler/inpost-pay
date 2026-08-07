@@ -294,10 +294,6 @@ readonly class OrderDataExtractor
                 $promoPrice = $unitPrice;
             }
 
-            if ($lowestPrice !== null && $promoPrice !== null && $lowestPrice->getGross() < $promoPrice->getGross()) {
-                $lowestPrice = null;
-            }
-
             $quantity = new Quantity(
                 value: (float) $lineItem->getQuantity(),
                 unit: 'pcs',

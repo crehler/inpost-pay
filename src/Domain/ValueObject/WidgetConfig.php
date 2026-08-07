@@ -39,6 +39,7 @@ final readonly class WidgetConfig
         public ?string $basketBindingApiKey = null,
         public ?string $merchantSecret = null,
         public array $displayConfigurations = [],
+        public string $jsLogLevel = 'error',
     ) {
         if (empty($scriptUrl) || !filter_var($scriptUrl, FILTER_VALIDATE_URL)) {
             throw new InvalidArgumentException(sprintf('Invalid script URL: %s', $scriptUrl));
@@ -46,6 +47,10 @@ final readonly class WidgetConfig
 
         if (!in_array($mode, [self::SANDBOX, self::PRODUCTION], true)) {
             throw new InvalidArgumentException(sprintf('Invalid mode: %s', $mode));
+        }
+
+        if (!in_array($jsLogLevel, ['error', 'warning', 'info', 'debug'], true)) {
+            throw new InvalidArgumentException(sprintf('Invalid jsLogLevel: %s', $jsLogLevel));
         }
     }
 

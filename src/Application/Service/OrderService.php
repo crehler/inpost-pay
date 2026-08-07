@@ -18,7 +18,6 @@ use Crehler\InpostPay\Domain\Aggregate\Order;
 use Crehler\InpostPay\Domain\Exception\{InvalidBasketException, InvalidOrderEventException, InvalidOrderException, OrderNotFoundException};
 use Crehler\InpostPay\Domain\ValueObject\{DeliveryType, KeyValue, PaymentStatus, PaymentType, ServiceCode};
 use Crehler\InpostPay\Domain\ValueObject\Order\{CustomerInfo, LegalForm};
-use Crehler\InpostPay\Infrastructure\Logger\ExtendedLogger;
 use Crehler\InpostPay\Infrastructure\Persistence\Repository\{InpostPayPaymentMethodResolver, ShopwareOrderRepository};
 use Crehler\InpostPay\Infrastructure\Provider\{DeliveryMappingProvider, InpostPayConfigProvider, ParcelLockerAddressProvider, ServiceOptionsProvider};
 use DateTimeImmutable;
@@ -75,7 +74,6 @@ readonly class OrderService
         private EventDispatcherInterface $eventDispatcher,
         private LoggerInterface $logger,
         private StatusLabelResolver $statusLabelResolver,
-        private ExtendedLogger $extendedLogger,
     ) {
     }
 
@@ -154,11 +152,12 @@ readonly class OrderService
                 $orderDto->orderDetails->paymentType,
             );
 
-            $this->extendedLogger->info('[order] Resolved payment method for payment type', [
+            $this->logger->debug('Resolved payment method for payment type', [
                 'basket_id' => $basketId,
+                'sales_channel_id' => $salesChannelId,
                 'payment_type' => $orderDto->orderDetails->paymentType->value,
                 'resolved_payment_method_id' => $inpostPayMethodId,
-            ], $salesChannelId);
+            ]);
 
             $shippingMethodId = $this->deliveryMappingProvider->getShippingMethodIdForDeliveryType(
                 $orderDto->delivery->deliveryType,
@@ -175,7 +174,7 @@ readonly class OrderService
                 throw InvalidOrderException::missingShippingMethodMapping($orderDto->delivery->deliveryType->value);
             }
 
-            $this->extendedLogger->info('[order] Resolved shipping method for delivery type', [
+            $this->logger->debug('Resolved shipping method for delivery type', [
                 'basket_id' => $basketId,
                 'sales_channel_id' => $salesChannelId,
                 'delivery_type' => $orderDto->delivery->deliveryType->value,
@@ -183,7 +182,7 @@ readonly class OrderService
                 'apm_method_ids' => $this->deliveryMappingProvider->getMethodIdsByType(DeliveryType::APM, $salesChannelId),
                 'courier_method_ids' => $this->deliveryMappingProvider->getMethodIdsByType(DeliveryType::COURIER, $salesChannelId),
                 'digital_method_ids' => $this->deliveryMappingProvider->getMethodIdsByType(DeliveryType::DIGITAL, $salesChannelId),
-            ], $salesChannelId);
+            ]);
 
             $context = $this->cartOperationService->createSalesChannelContextWithCustomer(
                 $cartToken,
@@ -193,8 +192,9 @@ readonly class OrderService
                 $shippingMethodId,
             );
 
-            $this->extendedLogger->info('[order] Shipping and payment method on built context', [
+            $this->logger->debug('Resolved shipping and payment method on the built sales channel context', [
                 'basket_id' => $basketId,
+                'sales_channel_id' => $salesChannelId,
                 'requested_shipping_method_id' => $shippingMethodId,
                 'context_shipping_method_id' => $context->getShippingMethod()->getId(),
                 'context_shipping_method_name' => $context->getShippingMethod()->getName(),
@@ -202,7 +202,7 @@ readonly class OrderService
                 'context_payment_method_id' => $context->getPaymentMethod()->getId(),
                 'context_payment_method_name' => $context->getPaymentMethod()->getName(),
                 'context_payment_method_handler' => $context->getPaymentMethod()->getHandlerIdentifier(),
-            ], $salesChannelId);
+            ]);
 
             $cart = $this->cartOperationService->loadCartByBasketId($basketId);
 
@@ -238,12 +238,13 @@ readonly class OrderService
                     'name' => $cartDelivery->getShippingMethod()->getName(),
                 ];
             }
-            $this->extendedLogger->info('[order] Cart deliveries after recalculate', [
+            $this->logger->debug('Cart deliveries after recalculation', [
                 'basket_id' => $basketId,
+                'sales_channel_id' => $salesChannelId,
                 'context_shipping_method_id' => $context->getShippingMethod()->getId(),
                 'cart_delivery_methods' => $cartDeliveryMethods,
                 'cart_transaction_payment_method_id' => $cart->getTransactions()->first()?->getPaymentMethodId(),
-            ], $salesChannelId);
+            ]);
 
             $orderData = $this->orderConverter->convertToOrder($cart, $context, $conversionContext);
             $shopwareOrderId = $orderData['id'];
@@ -252,10 +253,11 @@ readonly class OrderService
             foreach ($orderData['deliveries'] ?? [] as $od) {
                 $orderDataDeliveryMethods[] = $od['shippingMethodId'] ?? null;
             }
-            $this->extendedLogger->info('[order] orderData delivery shipping methods', [
+            $this->logger->debug('Order data delivery shipping methods', [
                 'basket_id' => $basketId,
+                'sales_channel_id' => $salesChannelId,
                 'order_data_shipping_method_ids' => $orderDataDeliveryMethods,
-            ], $salesChannelId);
+            ]);
 
             $this->overrideOrderAddresses($orderData, $billingAddressId, $shippingAddressId, $tempContext->getContext());
 
