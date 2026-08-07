@@ -12,8 +12,7 @@ declare(strict_types=1);
 namespace Crehler\InpostPay\Infrastructure\Logger;
 
 use Crehler\InpostPay\Infrastructure\Provider\InpostPayConfigProvider;
-use Psr\Log\AbstractLogger;
-use Psr\Log\LoggerInterface;
+use Psr\Log\{AbstractLogger, LoggerInterface};
 use Stringable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Service\ResetInterface;
