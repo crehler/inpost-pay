@@ -30,9 +30,11 @@ use Shopware\Core\Checkout\Promotion\Aggregate\PromotionDiscount\PromotionDiscou
 use Shopware\Core\Checkout\Promotion\Cart\{PromotionDeliveryProcessor, PromotionProcessor};
 use Shopware\Core\Checkout\Shipping\SalesChannel\{AbstractShippingMethodRoute, ShippingMethodRoute};
 use Shopware\Core\Content\Product\Aggregate\ProductMedia\ProductMediaEntity;
+use Shopware\Core\Content\Product\SalesChannel\Price\{AbstractProductPriceCalculator, AppScriptProductPriceCalculator};
+use Shopware\Core\Content\Product\SalesChannel\SalesChannelProductEntity;
 use Shopware\Core\Content\Product\State;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -68,7 +70,10 @@ readonly class CartDataExtractor
     public function __construct(
         private InpostPayConfigProvider $configProvider,
         private CashRounding $cashRounding,
-        private EntityRepository $productRepository,
+        #[Autowire(service: 'sales_channel.product.repository')]
+        private SalesChannelRepository $salesChannelProductRepository,
+        #[Autowire(service: AppScriptProductPriceCalculator::class)]
+        private AbstractProductPriceCalculator $productPriceCalculator,
         private DeliveryMappingProvider $deliveryMappingProvider,
         #[Autowire(service: ShippingMethodRoute::class)]
         private AbstractShippingMethodRoute $shippingMethodRoute,
@@ -210,8 +215,7 @@ readonly class CartDataExtractor
     {
         $productLineItems = $cart->getLineItems()->filterType(LineItem::PRODUCT_LINE_ITEM_TYPE);
         $productIds = array_filter($productLineItems->getReferenceIds());
-        $descriptions = $this->loadProductDescriptions($productIds, $context);
-        $productMedia = $this->loadProductMedia($productIds, $context);
+        $productData = $this->loadProductData($productIds, $context);
 
         $products = [];
 
@@ -220,6 +224,8 @@ readonly class CartDataExtractor
             if ($lineItemPrice === null) {
                 continue;
             }
+
+            $data = $productData[$lineItem->getReferencedId()] ?? null;
 
             $itemRounding = $context->getItemRounding();
             $quantity = $lineItemPrice->getQuantity();
@@ -239,8 +245,10 @@ readonly class CartDataExtractor
 
             $netRatio = $unitGrossPrice > 0 ? $unitNetPrice / $unitGrossPrice : 1.0;
 
+            $calculatedPrice = $data['calculatedPrice'] ?? null;
+
             $lowestPrice = null;
-            $regulation = $lineItemPrice->getRegulationPrice();
+            $regulation = $calculatedPrice?->getRegulationPrice();
             if ($regulation !== null && $regulation->getPrice() > 0) {
                 $regGross = $regulation->getPrice();
                 $lowestPrice = Money::fromShopwarePrice(net: $regGross * $netRatio, gross: $regGross);
@@ -248,15 +256,11 @@ readonly class CartDataExtractor
 
             $basePrice = $price;
             $promoPrice = null;
-            $listPrice = $lineItemPrice->getListPrice();
+            $listPrice = $calculatedPrice?->getListPrice();
             if ($listPrice !== null && $listPrice->getPrice() > $unitGrossPrice) {
                 $listGross = $listPrice->getPrice();
                 $basePrice = Money::fromShopwarePrice(net: $listGross * $netRatio, gross: $listGross);
                 $promoPrice = $price;
-            }
-
-            if ($lowestPrice !== null && $promoPrice !== null && $lowestPrice->getGross() > $promoPrice->getGross()) {
-                $lowestPrice = null;
             }
 
             $deliveryInfo = $lineItem->getDeliveryInformation();
@@ -306,10 +310,10 @@ readonly class CartDataExtractor
                 productType: $isDigital ? ProductType::DIGITAL : ProductType::PRODUCT,
                 productCategory: null,
                 ean: null,
-                productDescription: $descriptions[$lineItem->getReferencedId()] ?? null,
+                productDescription: $data['description'] ?? null,
                 productLink: $this->productUrlGenerator->generateUrl($lineItem->getReferencedId(), $context),
                 productImage: $productImage,
-                additionalProductImages: $productMedia[$lineItem->getReferencedId()] ?? [],
+                additionalProductImages: $data['images'] ?? [],
                 promoPrice: $promoPrice,
                 lowestPrice: $lowestPrice,
                 productAttributes: $productAttributes,
@@ -326,7 +330,7 @@ readonly class CartDataExtractor
     {
         $productLineItems = $cart->getLineItems()->filterType(LineItem::PRODUCT_LINE_ITEM_TYPE);
         $productIds = array_filter($productLineItems->getReferenceIds());
-        $descriptions = $this->loadProductDescriptions($productIds, $context);
+        $productData = $this->loadProductData($productIds, $context);
 
         $orderLines = [];
 
@@ -382,7 +386,7 @@ readonly class CartDataExtractor
                 basePrice: $basePrice,
                 ean: null,
                 category: $firstCategoryId,
-                description: $descriptions[$productId] ?? null,
+                description: $productData[$productId]['description'] ?? null,
                 imageUrl: $imageUrl,
                 productUrl: $this->productUrlGenerator->generateUrl($productId, $context),
             );
@@ -880,30 +884,20 @@ readonly class CartDataExtractor
         return $productAttributes;
     }
 
-    private function loadProductDescriptions(array $productIds, SalesChannelContext $context): array
-    {
-        if (empty($productIds)) {
-            return [];
-        }
-
-        $criteria = new Criteria($productIds);
-        $products = $this->productRepository->search($criteria, $context->getContext())->getElements();
-
-        $descriptions = [];
-        foreach ($products as $product) {
-            $translated = $product->getTranslated();
-            $descriptions[$product->getId()] = $translated['description'] ?? $product->getDescription();
-        }
-
-        return $descriptions;
-    }
-
     /**
+     * Batch-loads everything InPost Pay needs about the cart's products in a single
+     * query: description, gallery images, and a context-correct calculated price
+     * (list/regulation price included). Uses sales_channel.product.repository +
+     * AbstractProductPriceCalculator - the same mechanism Shopware's own storefront
+     * uses for the product detail page - because the cart line item's own
+     * CalculatedPrice never carries regulationPrice (confirmed: standard Shopware
+     * cart-building behaviour, not something InpostPay can fix on the line item).
+     *
      * @param string[] $productIds
      *
-     * @return array<string, ProductImage[]>
+     * @return array<string, array{description: ?string, images: ProductImage[], calculatedPrice: ?CalculatedPrice}>
      */
-    private function loadProductMedia(array $productIds, SalesChannelContext $context): array
+    private function loadProductData(array $productIds, SalesChannelContext $context): array
     {
         if (empty($productIds)) {
             return [];
@@ -911,43 +905,61 @@ readonly class CartDataExtractor
 
         $criteria = new Criteria($productIds);
         $criteria->addAssociation('media');
-        $products = $this->productRepository->search($criteria, $context->getContext())->getElements();
 
-        $images = [];
+        $products = $this->salesChannelProductRepository->search($criteria, $context)->getEntities();
+
+        $this->productPriceCalculator->calculate($products, $context);
+
+        $result = [];
+        /** @var SalesChannelProductEntity $product */
         foreach ($products as $product) {
-            $media = $product->getMedia();
-            if ($media === null) {
+            $translated = $product->getTranslated();
+
+            $result[$product->getId()] = [
+                'description' => $translated['description'] ?? $product->getDescription(),
+                'images' => $this->buildProductImages($product),
+                'calculatedPrice' => $product->getCalculatedPrice(),
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return ProductImage[]
+     */
+    private function buildProductImages(SalesChannelProductEntity $product): array
+    {
+        $media = $product->getMedia();
+        if ($media === null) {
+            return [];
+        }
+
+        $coverId = $product->getCoverId();
+        $mediaItems = $media->getElements();
+        usort(
+            $mediaItems,
+            static fn (ProductMediaEntity $a, ProductMediaEntity $b): int => $a->getPosition() <=> $b->getPosition(),
+        );
+
+        $productImages = [];
+        foreach ($mediaItems as $productMedia) {
+            if ($coverId !== null && $productMedia->getId() === $coverId) {
                 continue;
             }
 
-            $coverId = $product->getCoverId();
-            $mediaItems = $media->getElements();
-            usort(
-                $mediaItems,
-                static fn (ProductMediaEntity $a, ProductMediaEntity $b): int => $a->getPosition() <=> $b->getPosition(),
-            );
-
-            $productImages = [];
-            foreach ($mediaItems as $productMedia) {
-                if ($coverId !== null && $productMedia->getId() === $coverId) {
-                    continue;
-                }
-
-                $productImage = $this->buildProductImage($productMedia);
-                if ($productImage === null) {
-                    continue;
-                }
-
-                $productImages[] = $productImage;
-                if (count($productImages) >= 10) {
-                    break;
-                }
+            $productImage = $this->buildProductImage($productMedia);
+            if ($productImage === null) {
+                continue;
             }
 
-            $images[$product->getId()] = $productImages;
+            $productImages[] = $productImage;
+            if (count($productImages) >= 10) {
+                break;
+            }
         }
 
-        return $images;
+        return $productImages;
     }
 
     private function buildProductImage(ProductMediaEntity $productMedia): ?ProductImage

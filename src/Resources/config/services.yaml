@@ -3,7 +3,7 @@ services:
     autowire: true
     autoconfigure: true
     bind:
-      $logger: '@monolog.logger.crehler_inpostpay'
+      $logger: '@Crehler\InpostPay\Infrastructure\Logger\InpostPayLogger'
       $languageRepository: '@language.repository'
       $categoryRepository: '@category.repository'
       $cmsPageRepository: '@cms_page.repository'

@@ -294,10 +294,6 @@ readonly class OrderDataExtractor
                 $promoPrice = Money::fromShopwarePrice(net: $unitNetPrice, gross: $unitGrossPrice);
             }
 
-            if ($lowestPrice !== null && $promoPrice !== null && $lowestPrice->getGross() < $promoPrice->getGross()) {
-                $lowestPrice = null;
-            }
-
             $quantity = new Quantity(
                 value: (float) $lineItem->getQuantity(),
                 unit: 'pcs',

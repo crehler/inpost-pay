@@ -17,6 +17,8 @@ use Crehler\InpostPay\Domain\ValueObject\{HtmlStyles, WidgetConfig, WidgetDispla
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
+use function in_array;
+
 final readonly class InpostPayConfigProvider
 {
     /**
@@ -49,6 +51,7 @@ final readonly class InpostPayConfigProvider
             basketBindingApiKey: '',
             merchantSecret: $this->getMerchantSecret($salesChannelId),
             displayConfigurations: $displayConfigurations,
+            jsLogLevel: $this->getLogLevel(),
         );
 
         if ($context === null) {
@@ -72,6 +75,7 @@ final readonly class InpostPayConfigProvider
             basketBindingApiKey: $session->getBasketBindingApiKey(),
             merchantSecret: $config->merchantSecret,
             displayConfigurations: $config->displayConfigurations,
+            jsLogLevel: $config->jsLogLevel,
         );
     }
 
@@ -83,9 +87,11 @@ final readonly class InpostPayConfigProvider
         );
     }
 
-    public function isExtendedLoggingEnabled(?string $salesChannelId = null): bool
+    public function getLogLevel(): string
     {
-        return $this->getConfigBool('extendedLogging', $salesChannelId, false);
+        $level = $this->getConfigString('logLevel');
+
+        return in_array($level, ['error', 'warning', 'info', 'debug'], true) ? $level : 'error';
     }
 
     public function isCodSeparatePaymentMethodEnabled(?string $salesChannelId = null): bool
