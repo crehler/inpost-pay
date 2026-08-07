@@ -77,7 +77,7 @@ readonly class BasketService
         $deliveryOptions = $this->cartDataExtractor->extractDeliveryOptions($cart, $context, $products);
         $relatedProducts = $this->collectRelatedProducts($cart, $context);
         $consents = $this->consentService->getConsentsArrayForBasket($context);
-        $promoCodes = $this->cartDataExtractor->extractPromoCodes($cart);
+        $promoCodes = $this->cartDataExtractor->extractPromoCodes($cart, $products);
 
         return new InpostBasket(
             basketId: $basketId,
@@ -215,7 +215,7 @@ readonly class BasketService
 
             $relatedProducts = $this->collectRelatedProducts($cart, $context);
             $consents = $this->consentService->getConsentsArrayForBasket($context);
-            $promoCodes = $this->cartDataExtractor->extractPromoCodes($cart);
+            $promoCodes = $this->cartDataExtractor->extractPromoCodes($cart, $products);
 
             return new InpostBasket(
                 basketId: $basketId,
@@ -282,7 +282,7 @@ readonly class BasketService
 
         $relatedProducts = $this->collectRelatedProducts($cart, $context);
         $consents = $this->consentService->getConsentsArrayForBasket($context);
-        $promoCodes = $this->cartDataExtractor->extractPromoCodes($cart);
+        $promoCodes = $this->cartDataExtractor->extractPromoCodes($cart, $products);
 
         return new InpostBasket(
             basketId: $basketId,
