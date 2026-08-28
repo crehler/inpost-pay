@@ -15,6 +15,7 @@ use Crehler\InpostPay\Domain\Service\OrderStatusDescriptionMapper;
 use Crehler\InpostPay\Domain\ValueObject\PaymentStatus;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryStates;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStates;
+use Shopware\Core\Checkout\Order\OrderStates;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 use function str_replace;
@@ -62,6 +63,12 @@ final readonly class StatusLabelResolver
         'REFUNDED' => 'statusLabelPayRefunded',
     ];
 
+    /** @var array<string, string> order state => config key */
+    private const ORDER = [
+        OrderStates::STATE_CANCELLED => 'statusLabelOrderCancelled',
+        OrderStates::STATE_COMPLETED => 'statusLabelOrderCompleted',
+    ];
+
     /** @var array<string, string> delivery state => config key */
     private const DELIVERY = [
         OrderDeliveryStates::STATE_OPEN => 'statusLabelDelOpen',
@@ -74,6 +81,22 @@ final readonly class StatusLabelResolver
         private SystemConfigService $systemConfigService,
         private OrderStatusDescriptionMapper $mapper,
     ) {
+    }
+
+    /**
+     * Returns null for non-terminal order states — the caller then falls back
+     * to the delivery/transaction cascade.
+     */
+    public function orderLabel(string $state, ?string $salesChannelId = null): ?string
+    {
+        $default = $this->mapper->mapOrderStateToPolish($state);
+        if ($default === null) {
+            return null;
+        }
+
+        $override = $this->override(self::ORDER[$state] ?? null, $salesChannelId);
+
+        return $override ?? $default;
     }
 
     public function transactionLabel(string $state, ?string $salesChannelId = null): string

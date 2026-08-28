@@ -1370,6 +1370,25 @@
     </card>
 
     <card>
+        <title>Status labels - Order</title>
+        <title lang="pl-PL">Etykiety statusów - Zamówienie</title>
+        <title lang="de-DE">Statusbezeichnungen - Bestellung</title>
+
+        <input-field>
+            <name>statusLabelOrderCancelled</name>
+            <label>Order: cancelled</label>
+            <label lang="pl-PL">Zamówienie: cancelled (anulowane)</label>
+            <defaultValue>Anulowane</defaultValue>
+        </input-field>
+        <input-field>
+            <name>statusLabelOrderCompleted</name>
+            <label>Order: completed</label>
+            <label lang="pl-PL">Zamówienie: completed (zrealizowane)</label>
+            <defaultValue>Zrealizowane</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
         <title>Status labels - Transaction</title>
         <title lang="pl-PL">Etykiety statusów - Transakcja (płatność)</title>
         <title lang="de-DE">Statusbezeichnungen - Transaktion</title>
