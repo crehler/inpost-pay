@@ -14,6 +14,7 @@ namespace Crehler\InpostPay\Domain\Service;
 use Crehler\InpostPay\Domain\ValueObject\PaymentStatus;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryStates;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStates;
+use Shopware\Core\Checkout\Order\OrderStates;
 
 use function sprintf;
 
@@ -37,9 +38,26 @@ final readonly class OrderStatusDescriptionMapper
         OrderTransactionStates::STATE_UNCONFIRMED => 'Niepotwierdzone',
     ];
 
+    /**
+     * @var array<string, string>
+     */
+    private const ORDER_STATE_MAP = [
+        OrderStates::STATE_CANCELLED => 'Anulowane',
+        OrderStates::STATE_COMPLETED => 'Zrealizowane',
+    ];
+
     public function mapToPolish(string $shopwareState): string
     {
         return self::STATUS_MAP[$shopwareState] ?? 'Nieznany status';
+    }
+
+    /**
+     * Returns null for non-terminal order states — the caller then falls back
+     * to the delivery/transaction description.
+     */
+    public function mapOrderStateToPolish(string $orderState): ?string
+    {
+        return self::ORDER_STATE_MAP[$orderState] ?? null;
     }
 
     public function mapPaymentStatusToPolish(PaymentStatus $paymentStatus): string
