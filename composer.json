@@ -2,7 +2,7 @@
     "name": "crehler/inpost-pay",
     "description": "InPost Pay integration",
     "type": "shopware-platform-plugin",
-    "version": "4.1.11",
+    "version": "4.1.12",
     "authors": [
         {
             "name": "Crehler Sp. z o. o.",
@@ -18,7 +18,7 @@
         "league/oauth2-client": "^2.7",
         "guzzlehttp/guzzle": "^7.5.0",
         "ramsey/uuid": "^4.7",
-        "doctrine/dbal": "~4.3.1"
+        "doctrine/dbal": "^4.3"
     },
     "extra": {
         "shopware-plugin-class": "Crehler\\InpostPay\\InpostPay",
