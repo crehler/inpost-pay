@@ -74,6 +74,15 @@ readonly class OrderUpdateNotifier
 
     private function buildStatusDescription(OrderEntity $order): string
     {
+        // A terminal order state outranks the delivery/payment cascade — once the
+        // order is cancelled or completed, that is the status the app must show.
+        $orderStateLabel = $this->statusMapper->mapOrderStateToPolish(
+            $order->getStateMachineState()?->getTechnicalName() ?? ''
+        );
+        if ($orderStateLabel !== null) {
+            return $orderStateLabel;
+        }
+
         $deliveries = $order->getDeliveries();
 
         if ($deliveries !== null && $deliveries->count() > 0) {
