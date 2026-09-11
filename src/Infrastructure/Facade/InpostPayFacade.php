@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Crehler\InpostPay\Infrastructure\Facade;
 
 use Crehler\InpostPay\Application\Dto\{BasketEventDto, CreateOrderDto, OrderEventDto, OrderUpdateNotificationDto, RefundRequestDto, RefundResponseDto, TransactionQueryDto, TransactionResponseDto, WebhookPayloadDto};
+use Crehler\InpostPay\Application\Event\OrderUpdatePayloadBuiltEvent;
 use Crehler\InpostPay\Application\Facade\InpostPayFacadeInterface;
 use Crehler\InpostPay\Application\Service\{BasketService, CartOperationService, InpostBasketSessionService, InpostPayAuthenticator, OrderService, RefundService, WebhookService};
 use Crehler\InpostPay\Domain\Event\BasketDesynchronizedEvent;
@@ -444,9 +445,12 @@ final readonly class InpostPayFacade implements InpostPayFacadeInterface
             $auth = $this->authenticator->authenticate();
             $config = $this->getWidgetConfig();
 
+            $event = new OrderUpdatePayloadBuiltEvent($orderId, $dto, $dto->toArray());
+            $this->eventDispatcher->dispatch($event);
+
             $this->client->sendOrderEvent(
                 orderId: $orderId,
-                data: $dto->toArray(),
+                data: $event->getPayload(),
                 bearerToken: $auth->token,
                 mode: $config->mode,
             );

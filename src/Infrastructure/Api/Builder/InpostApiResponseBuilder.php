@@ -11,25 +11,34 @@ declare(strict_types=1);
 
 namespace Crehler\InpostPay\Infrastructure\Api\Builder;
 
+use Crehler\InpostPay\Application\Event\{BasketPayloadBuiltEvent, OrderPayloadBuiltEvent};
 use Crehler\InpostPay\Domain\Aggregate\{InpostBasket, Order};
 use Crehler\InpostPay\Infrastructure\Serializer\InpostBasketSerializer;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 readonly class InpostApiResponseBuilder
 {
     public function __construct(
         private InpostBasketSerializer $serializer,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
     public function buildConfirmationResponse(InpostBasket $basket): array
     {
-        return $this->serializer->toInpostApiResponse($basket);
+        $event = new BasketPayloadBuiltEvent($basket, $this->serializer->toInpostApiResponse($basket));
+        $this->eventDispatcher->dispatch($event);
+
+        return $event->getPayload();
     }
 
     public function buildOrderResponse(Order $order): array
     {
-        return $order->toArray();
+        $event = new OrderPayloadBuiltEvent($order, $order->toArray());
+        $this->eventDispatcher->dispatch($event);
+
+        return $event->getPayload();
     }
 
     public function buildBadRequestResponse(string $message, array $violations = []): array
