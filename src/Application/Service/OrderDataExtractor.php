@@ -235,15 +235,16 @@ readonly class OrderDataExtractor
     private function extractInvoiceDetails(OrderEntity $order): ?InvoiceDetails
     {
         $billingAddress = $order->getBillingAddress();
+        $vatId = $billingAddress?->getVatId();
 
-        if (!$billingAddress->getCompany()) {
+        if ($billingAddress === null || !$billingAddress->getCompany() || !$vatId) {
             return null;
         }
 
         return new InvoiceDetails(
             legalForm: LegalForm::COMPANY,
-            countryCode: $billingAddress->getCountry()->getIso(),
-            taxId: $billingAddress->getVatId(),
+            countryCode: $billingAddress->getCountry()?->getIso() ?? '',
+            taxId: $vatId,
             companyName: $billingAddress->getCompany(),
             city: $billingAddress->getCity(),
             street: $billingAddress->getStreet(),

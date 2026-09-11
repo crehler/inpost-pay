@@ -11,9 +11,11 @@ declare(strict_types=1);
 
 namespace Crehler\InpostPay\Application\Service;
 
+use Crehler\InpostPay\Application\Event\InpostAddressMappedEvent;
 use Crehler\InpostPay\Domain\ValueObject\Address;
 use Crehler\InpostPay\Domain\ValueObject\Order\CustomerInfo;
 use DateTimeImmutable;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use RuntimeException;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
@@ -25,7 +27,9 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 
+use function array_merge;
 use function implode;
+use function in_array;
 use function sprintf;
 use function strtoupper;
 use function trim;
@@ -42,6 +46,7 @@ readonly class CustomerMatchingService
         #[Target('customer_address.repository')]
         private EntityRepository $customerAddressRepository,
         private NumberRangeValueGeneratorInterface $numberRangeValueGenerator,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -123,21 +128,15 @@ readonly class CustomerMatchingService
         $criteria->addFilter(new EqualsFilter('customerId', $customer->getId()));
 
         $addresses = $this->customerAddressRepository->search($criteria, $context);
-        $street = $this->buildStreetLine($inpostAddress);
-        $phoneNumber = $customerInfo->phone->getFullNumber();
+        $mappedAddress = $this->mapInpostAddress($inpostAddress, $customerInfo, $context);
 
         foreach ($addresses->getEntities() as $address) {
-            if ($this->addressMatches($address, $inpostAddress, $street, $phoneNumber)) {
+            if ($this->addressMatches($address, $mappedAddress)) {
                 return $address->getId();
             }
         }
 
-        return $this->createAddressForCustomer(
-            $customer,
-            $customerInfo,
-            $inpostAddress,
-            $context
-        );
+        return $this->createAddressForCustomer($customer, $mappedAddress, $context);
     }
 
     public function getAddressById(string $addressId, Context $context): ?CustomerAddressEntity
@@ -182,9 +181,7 @@ readonly class CustomerMatchingService
         $customerId = Uuid::randomHex();
         $addressId = Uuid::randomHex();
 
-        $countryId = $this->resolveCountryId($billingAddress->countryCode, $context);
-
-        $street = $this->buildStreetLine($billingAddress);
+        $mappedAddress = $this->mapInpostAddress($billingAddress, $customerInfo, $context);
 
         $customerData = [
             'id' => $customerId,
@@ -206,17 +203,10 @@ readonly class CustomerMatchingService
             'defaultBillingAddressId' => $addressId,
             'defaultShippingAddressId' => $addressId,
             'addresses' => [
-                [
+                array_merge($mappedAddress, [
                     'id' => $addressId,
                     'customerId' => $customerId,
-                    'countryId' => $countryId,
-                    'firstName' => $customerInfo->firstName,
-                    'lastName' => $customerInfo->lastName,
-                    'street' => $street,
-                    'zipcode' => $billingAddress->postalCode,
-                    'city' => $billingAddress->city,
-                    'phoneNumber' => $customerInfo->phone->getFullNumber(),
-                ],
+                ]),
             ],
         ];
 
@@ -256,41 +246,84 @@ readonly class CustomerMatchingService
         return $countryId;
     }
 
-    private function addressMatches(
-        CustomerAddressEntity $existing,
-        Address $inpostAddress,
-        string $street,
-        string $phoneNumber,
-    ): bool {
-        return $existing->getStreet() === $street
-            && $existing->getZipcode() === $inpostAddress->postalCode
-            && $existing->getCity() === $inpostAddress->city
-            && $existing->getPhoneNumber() === $phoneNumber
-            && $existing->getAdditionalAddressLine1() === $inpostAddress->additionalAddressLine1;
+    public function addVatIdToCustomer(CustomerEntity $customer, string $vatId, Context $context): void
+    {
+        // Przekazana encja mogła zostać pobrana dużo wcześniej (początek createOrder) —
+        // odczytaj vatIds świeżo tuż przed zapisem, żeby nie nadpisać cudzych zmian.
+        $freshCustomer = $this->customerRepository
+            ->search(new Criteria([$customer->getId()]), $context)
+            ->first();
+
+        $vatIds = $freshCustomer?->getVatIds() ?? [];
+
+        if (in_array($vatId, $vatIds, true)) {
+            return;
+        }
+
+        $vatIds[] = $vatId;
+
+        $this->customerRepository->update([
+            [
+                'id' => $customer->getId(),
+                'vatIds' => $vatIds,
+            ],
+        ], $context);
     }
 
-    private function createAddressForCustomer(
-        CustomerEntity $customer,
-        CustomerInfo $customerInfo,
-        Address $inpostAddress,
-        Context $context,
-    ): string {
-        $addressId = Uuid::randomHex();
-        $countryId = $this->resolveCountryId($inpostAddress->countryCode, $context);
-        $street = $this->buildStreetLine($inpostAddress);
-
+    /**
+     * Wynik (po ewentualnych korektach listenerów InpostAddressMappedEvent) służy
+     * zarówno do zapisu adresu, jak i do deduplikacji — musi pozostać spójny.
+     *
+     * @return array<string, mixed>
+     */
+    private function mapInpostAddress(Address $inpostAddress, CustomerInfo $customerInfo, Context $context): array
+    {
         $addressData = [
-            'id' => $addressId,
-            'customerId' => $customer->getId(),
-            'countryId' => $countryId,
+            'countryId' => $this->resolveCountryId($inpostAddress->countryCode, $context),
             'firstName' => $customerInfo->firstName,
             'lastName' => $customerInfo->lastName,
-            'street' => $street,
+            'street' => $this->buildStreetLine($inpostAddress),
             'zipcode' => $inpostAddress->postalCode,
             'city' => $inpostAddress->city,
             'phoneNumber' => $customerInfo->phone->getFullNumber(),
             'additionalAddressLine1' => $inpostAddress->additionalAddressLine1,
         ];
+
+        $event = new InpostAddressMappedEvent($inpostAddress, $addressData);
+        $this->eventDispatcher->dispatch($event);
+
+        return $event->getAddressData();
+    }
+
+    /**
+     * @param array<string, mixed> $mappedAddress
+     */
+    private function addressMatches(CustomerAddressEntity $existing, array $mappedAddress): bool
+    {
+        return $existing->getCountryId() === ($mappedAddress['countryId'] ?? null)
+            && $existing->getFirstName() === ($mappedAddress['firstName'] ?? null)
+            && $existing->getLastName() === ($mappedAddress['lastName'] ?? null)
+            && $existing->getStreet() === ($mappedAddress['street'] ?? null)
+            && $existing->getZipcode() === ($mappedAddress['zipcode'] ?? null)
+            && $existing->getCity() === ($mappedAddress['city'] ?? null)
+            && $existing->getPhoneNumber() === ($mappedAddress['phoneNumber'] ?? null)
+            && $existing->getAdditionalAddressLine1() === ($mappedAddress['additionalAddressLine1'] ?? null);
+    }
+
+    /**
+     * @param array<string, mixed> $mappedAddress
+     */
+    private function createAddressForCustomer(
+        CustomerEntity $customer,
+        array $mappedAddress,
+        Context $context,
+    ): string {
+        $addressId = Uuid::randomHex();
+
+        $addressData = array_merge($mappedAddress, [
+            'id' => $addressId,
+            'customerId' => $customer->getId(),
+        ]);
 
         $this->customerAddressRepository->create([$addressData], $context);
 

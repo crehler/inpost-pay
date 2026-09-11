@@ -13,7 +13,8 @@ namespace Crehler\InpostPay\Application\Service;
 
 use Crehler\InpostPay\Application\Dto\{CreateOrderDto, OrderEventDto};
 use Crehler\InpostPay\Application\Dto\EventData\PaymentEventData;
-use Crehler\InpostPay\Application\Event\OrderCartPreparedEvent;
+use Crehler\InpostPay\Application\Dto\Order\InvoiceDetailsDto;
+use Crehler\InpostPay\Application\Event\{OrderCartPreparedEvent, OrderDataPreparedEvent};
 use Crehler\InpostPay\Domain\Aggregate\Order;
 use Crehler\InpostPay\Domain\Exception\{InvalidBasketException, InvalidOrderEventException, InvalidOrderException, OrderNotFoundException};
 use Crehler\InpostPay\Domain\ValueObject\{DeliveryType, KeyValue, PaymentStatus, PaymentType, ServiceCode};
@@ -44,8 +45,10 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 use ValueError;
 
+use function array_filter;
 use function array_map;
 use function array_merge;
+use function array_replace;
 use function explode;
 use function is_array;
 use function sprintf;
@@ -284,49 +287,37 @@ readonly class OrderService
                 throw new InvalidBasketException(sprintf('Missing customer name for InPost Pay order (basketId: %s)', $basketId));
             }
 
-            if ($orderDto->invoiceDetails !== null && $orderDto->invoiceDetails->legalForm === LegalForm::COMPANY->value) {
-                $invoice = $orderDto->invoiceDetails;
-                $vatId = trim(($invoice->taxIdPrefix ?? '') . ($invoice->taxId ?? ''));
-
-                $street = trim(($invoice->street ?? '') . ' ' . ($invoice->building ?? ''));
-                if ($invoice->flat) {
-                    $street .= '/' . $invoice->flat;
-                }
-                $street = trim($street);
-
-                if (isset($orderData['addresses']) && is_array($orderData['addresses'])) {
-                    foreach ($orderData['addresses'] as &$address) {
-                        if (($address['id'] ?? null) === ($orderData['billingAddressId'] ?? null)) {
-                            if ($invoice->companyName) {
-                                $address['company'] = $invoice->companyName;
-                            }
-                            if ($vatId !== '') {
-                                $address['vatId'] = $vatId;
-                            }
-                            if ($street !== '') {
-                                $address['street'] = $street;
-                            }
-                            if ($invoice->city) {
-                                $address['city'] = $invoice->city;
-                            }
-                            if ($invoice->postalCode) {
-                                $address['zipcode'] = $invoice->postalCode;
-                            }
-                            if ($invoice->countryCode) {
-                                $address['countryId'] = $this->customerMatchingService->resolveCountryId($invoice->countryCode, $context->getContext());
-                            }
-                            break;
-                        }
-                    }
-                    unset($address);
-                }
-
-                if ($vatId !== '') {
-                    $orderData['orderCustomer']['vatIds'] = [$vatId];
-                }
+            if (
+                $orderDto->invoiceDetails !== null
+                && $orderDto->invoiceDetails->legalForm === LegalForm::COMPANY->value
+            ) {
+                $this->applyCompanyInvoiceDetails(
+                    $orderData,
+                    $orderDto->invoiceDetails,
+                    $tempContext->getContext()
+                );
             }
 
+            $orderDataEvent = new OrderDataPreparedEvent($orderData, $orderDto, $cart, $context, $basketId);
+            $this->eventDispatcher->dispatch($orderDataEvent);
+            $orderData = $orderDataEvent->getOrderData();
+
             $this->orderRepository->create([$orderData], $context->getContext());
+
+            // Jedno źródło prawdy: NIP czytany z finalnego orderData (po listenerach
+            // OrderDataPreparedEvent), nie sprzed eventu.
+            $orderVatId = $orderData['orderCustomer']['vatIds'][0] ?? null;
+            if ($orderVatId !== null) {
+                try {
+                    $this->customerMatchingService->addVatIdToCustomer($customer, $orderVatId, $tempContext->getContext());
+                } catch (Throwable $e) {
+                    $this->logger->warning('Failed to persist invoice vatId on customer', [
+                        'customer_id' => $customer->getId(),
+                        'basket_id' => $basketId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             if ($orderDto->orderDetails->orderComments) {
                 $partialOrderIds = $orderData['customFields']['partialOrdersIds'] ?? [];
@@ -665,6 +656,83 @@ readonly class OrderService
                 $delivery['shippingOrderAddressId'] = $shippingData['id'];
             }
         }
+    }
+
+    /**
+     * Dokłada osobny billingowy order_address z danych faktury i przepina na niego
+     * billingAddressId; wpis adresu dostawy w addresses[] pozostaje nietknięty.
+     */
+    private function applyCompanyInvoiceDetails(
+        array &$orderData,
+        InvoiceDetailsDto $invoice,
+        Context $context,
+    ): void {
+        $vatId = $invoice->fullVatId();
+
+        if ($vatId === null && !$invoice->companyName) {
+            return;
+        }
+
+        if ($vatId !== null) {
+            $orderData['orderCustomer']['vatIds'] = [$vatId];
+        }
+
+        $base = $this->findBillingAddress($orderData);
+        if ($base === null) {
+            $this->logger->warning('Billing address entry not found in order data, skipping invoice address', [
+                'billing_address_id' => $orderData['billingAddressId'] ?? null,
+            ]);
+
+            return;
+        }
+
+        $invoiceAddress = $this->buildInvoiceAddress($base, $invoice, $vatId, $context);
+
+        $orderData['addresses'][] = $invoiceAddress;
+        $orderData['billingAddressId'] = $invoiceAddress['id'];
+    }
+
+    private function findBillingAddress(array $orderData): ?array
+    {
+        $billingId = $orderData['billingAddressId'] ?? null;
+        if ($billingId === null) {
+            return null;
+        }
+
+        foreach ($orderData['addresses'] ?? [] as $address) {
+            if (($address['id'] ?? null) === $billingId) {
+                return $address;
+            }
+        }
+
+        return null;
+    }
+
+    private function buildInvoiceAddress(
+        array $base,
+        InvoiceDetailsDto $invoice,
+        ?string $vatId,
+        Context $context,
+    ): array {
+        $overrides = array_filter([
+            'company' => $invoice->companyName,
+            'vatId' => $vatId,
+            'street' => $invoice->streetLine(),
+            'city' => $invoice->city,
+            'zipcode' => $invoice->postalCode,
+            'firstName' => $invoice->name,
+            'lastName' => $invoice->surname,
+        ], static fn (?string $value): bool => $value !== null && $value !== '');
+
+        $address = array_replace($base, $overrides, ['id' => Uuid::randomHex()]);
+
+        if ($invoice->countryCode) {
+            $address['countryId'] = $this->customerMatchingService->resolveCountryId($invoice->countryCode, $context);
+            // Stan/województwo z adresu klienta może nie należeć do kraju faktury.
+            $address['countryStateId'] = null;
+        }
+
+        return $address;
     }
 
     private function mapAddressToOrderAddress(\Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity $address): array
