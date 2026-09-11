@@ -287,10 +287,10 @@ readonly class OrderService
                 throw new InvalidBasketException(sprintf('Missing customer name for InPost Pay order (basketId: %s)', $basketId));
             }
 
-            if (
-                $orderDto->invoiceDetails !== null
-                && $orderDto->invoiceDetails->legalForm === LegalForm::COMPANY->value
-            ) {
+            $isCompanyInvoice = $orderDto->invoiceDetails !== null
+                && $orderDto->invoiceDetails->legalForm === LegalForm::COMPANY->value;
+
+            if ($isCompanyInvoice) {
                 $this->applyCompanyInvoiceDetails(
                     $orderData,
                     $orderDto->invoiceDetails,
@@ -304,14 +304,19 @@ readonly class OrderService
 
             $this->orderRepository->create([$orderData], $context->getContext());
 
-            // Jedno źródło prawdy: NIP czytany z finalnego orderData (po listenerach
-            // OrderDataPreparedEvent), nie sprzed eventu.
-            $orderVatId = $orderData['orderCustomer']['vatIds'][0] ?? null;
-            if ($orderVatId !== null) {
+            $orderVatId = $this->firstNonEmptyVatId($orderData['orderCustomer']['vatIds'] ?? []);
+            $orderCompany = trim((string) ($this->findBillingAddress($orderData)['company'] ?? '')) ?: null;
+
+            if ($orderVatId !== null || $orderCompany !== null) {
                 try {
-                    $this->customerMatchingService->addVatIdToCustomer($customer, $orderVatId, $tempContext->getContext());
+                    $this->customerMatchingService->syncCompanyDataToCustomer(
+                        $customer,
+                        $orderVatId,
+                        $orderCompany,
+                        $tempContext->getContext()
+                    );
                 } catch (Throwable $e) {
-                    $this->logger->warning('Failed to persist invoice vatId on customer', [
+                    $this->logger->warning('Failed to sync invoice company data to customer', [
                         'customer_id' => $customer->getId(),
                         'basket_id' => $basketId,
                         'error' => $e->getMessage(),
@@ -690,6 +695,18 @@ readonly class OrderService
 
         $orderData['addresses'][] = $invoiceAddress;
         $orderData['billingAddressId'] = $invoiceAddress['id'];
+    }
+
+    private function firstNonEmptyVatId(array $vatIds): ?string
+    {
+        foreach ($vatIds as $vatId) {
+            $vatId = trim((string) $vatId);
+            if ($vatId !== '') {
+                return $vatId;
+            }
+        }
+
+        return null;
     }
 
     private function findBillingAddress(array $orderData): ?array
