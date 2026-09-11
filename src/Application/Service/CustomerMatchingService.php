@@ -220,28 +220,43 @@ readonly class CustomerMatchingService
         return $customer;
     }
 
-    public function addVatIdToCustomer(CustomerEntity $customer, string $vatId, Context $context): void
-    {
+    public function syncCompanyDataToCustomer(
+        CustomerEntity $customer,
+        ?string $vatId,
+        ?string $companyName,
+        Context $context,
+    ): void {
         // Przekazana encja mogła zostać pobrana dużo wcześniej (początek createOrder) —
-        // odczytaj vatIds świeżo tuż przed zapisem, żeby nie nadpisać cudzych zmian.
+        // odczytaj stan świeżo tuż przed zapisem, żeby nie nadpisać cudzych zmian.
         $freshCustomer = $this->customerRepository
             ->search(new Criteria([$customer->getId()]), $context)
             ->first();
 
-        $vatIds = $freshCustomer?->getVatIds() ?? [];
+        $update = [];
 
-        if (in_array($vatId, $vatIds, true)) {
+        if ($vatId !== null) {
+            $vatIds = $freshCustomer?->getVatIds() ?? [];
+            if (!in_array($vatId, $vatIds, true)) {
+                $vatIds[] = $vatId;
+                $update['vatIds'] = $vatIds;
+            }
+        }
+
+        if ($freshCustomer?->getAccountType() !== CustomerEntity::ACCOUNT_TYPE_BUSINESS) {
+            $update['accountType'] = CustomerEntity::ACCOUNT_TYPE_BUSINESS;
+        }
+
+        if ($companyName !== null && $companyName !== $freshCustomer?->getCompany()) {
+            $update['company'] = $companyName;
+        }
+
+        if ($update === []) {
             return;
         }
 
-        $vatIds[] = $vatId;
+        $update['id'] = $customer->getId();
 
-        $this->customerRepository->update([
-            [
-                'id' => $customer->getId(),
-                'vatIds' => $vatIds,
-            ],
-        ], $context);
+        $this->customerRepository->update([$update], $context);
     }
 
     public function resolveCountryId(string $countryCode, Context $context): string
