@@ -13,6 +13,7 @@ namespace Crehler\InpostPay\Application\Service;
 
 use Crehler\InpostPay\Application\Dto\{BasketConfirmationDto, BasketEventDto};
 use Crehler\InpostPay\Application\Emitter\RelatedProductsEmitter;
+use Crehler\InpostPay\Application\Event\BasketEventReceivedEvent;
 use Crehler\InpostPay\Application\Facade\InpostPayFacadeInterface;
 use Crehler\InpostPay\Domain\Aggregate\InpostBasket;
 use Crehler\InpostPay\Domain\Exception\{BasketSessionNotFoundException, InvalidBasketException, InvalidPhoneNumberException, UnsupportedEventTypeException};
@@ -155,6 +156,8 @@ readonly class BasketService
             $context = $this->cartOperationService->createSalesChannelContextForSession($session);
 
             $context->addState(InpostPayFacadeInterface::INPOST_PAY_UPDATE_STATE);
+
+            $this->eventDispatcher->dispatch(new BasketEventReceivedEvent($dto, $cart, $context));
 
             $promoErrorMessage = null;
 
