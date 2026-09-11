@@ -17,7 +17,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Throwable;
 use ValueError;
 
+use function preg_replace;
 use function sprintf;
+use function trim;
 
 readonly class InvoiceDetailsDto
 {
@@ -67,6 +69,29 @@ readonly class InvoiceDetailsDto
         #[Assert\Type(type: 'string', message: 'Additional information must be a string')]
         public ?string $additionalInformation = null,
     ) {
+    }
+
+    public function fullVatId(): ?string
+    {
+        $taxId = preg_replace('/\s+/', '', $this->taxId ?? '') ?? '';
+        if ($taxId === '') {
+            return null;
+        }
+
+        $prefix = preg_replace('/\s+/', '', $this->taxIdPrefix ?? '') ?? '';
+
+        return $prefix . $taxId;
+    }
+
+    public function streetLine(): ?string
+    {
+        $street = trim(($this->street ?? '') . ' ' . ($this->building ?? ''));
+
+        if ($street === '') {
+            return null;
+        }
+
+        return $this->flat ? $street . '/' . $this->flat : $street;
     }
 
     public static function fromArray(array $data): self
