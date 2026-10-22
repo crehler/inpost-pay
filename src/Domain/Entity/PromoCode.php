@@ -15,6 +15,14 @@ use InvalidArgumentException;
 
 readonly class PromoCode
 {
+    /**
+     * Name, value and regulation type of the synthetic entry that marks a product markdown as
+     * covered by the Omnibus Directive. It is not a Shopware promotion - nothing in the shop
+     * can add or remove it - so CartOperationService has to keep it out of the promo code
+     * bookkeeping when the app echoes it back to us.
+     */
+    public const OMNIBUS = 'OMNIBUS';
+
     public function __construct(
         public string $name,
         public string $promoCodeValue,

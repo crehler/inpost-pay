@@ -12,9 +12,11 @@ declare(strict_types=1);
 namespace Crehler\InpostPay\Application\Service;
 
 use Crehler\InpostPay\Application\Dto\ApplyPromoCodesResult;
-use Crehler\InpostPay\Application\Dto\EventData\QuantityEventData;
+use Crehler\InpostPay\Application\Dto\EventData\{PromoCodeEventData, QuantityEventData};
+use Crehler\InpostPay\Domain\Entity\PromoCode;
 use Crehler\InpostPay\Domain\Exception\{BasketSessionNotFoundException, InvalidBasketException};
 use Crehler\InpostPay\Infrastructure\Persistence\Entity\InpostBasketSessionEntity;
+use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Cart\{AbstractCartPersister, Cart, CartException};
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService as ShopwareCartService;
@@ -26,6 +28,7 @@ use Throwable;
 
 use function implode;
 use function max;
+use function mb_strtolower;
 use function sprintf;
 
 readonly class CartOperationService
@@ -36,6 +39,7 @@ readonly class CartOperationService
         private SalesChannelContextPersister $salesChannelContextPersister,
         private AbstractCartPersister $cartPersister,
         private ShopwareCartService $cartService,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -140,22 +144,30 @@ readonly class CartOperationService
     ): ApplyPromoCodesResult {
         $errorMessages = [];
 
+        $incoming = [];
+        $hasExplicitAction = false;
         foreach ($promoCodes as $promoEvent) {
-            if ($promoEvent->isAdd() || $promoEvent->isUpdate()) {
-                $cart = $this->addPromoCode($cart, $context, $promoEvent->code);
-
-                $error = $this->extractPromotionError($cart);
-                if ($error !== null) {
-                    $errorMessages[] = $error;
-                }
-            } elseif ($promoEvent->isRemove()) {
-                $cart = $this->removePromoCode($cart, $context, $promoEvent->code);
-            }
+            $incoming[] = ['action' => $promoEvent->action, 'code' => $promoEvent->code];
+            $hasExplicitAction = $hasExplicitAction || $promoEvent->action !== null;
         }
+
+        $this->logger->info('Promo code event received', [
+            'events' => $incoming,
+            'codesInCart' => $this->cartPromoCodes($cart),
+        ]);
+
+        $cart = $hasExplicitAction
+            ? $this->applyPromoCodeActions($cart, $context, $promoCodes, $errorMessages)
+            : $this->syncPromoCodes($cart, $context, $promoCodes, $errorMessages);
 
         $this->cartPersister->save($cart, $context);
 
         $errorMessage = !empty($errorMessages) ? implode('; ', $errorMessages) : null;
+
+        $this->logger->info('Promo code event processed', [
+            'codesInCart' => $this->cartPromoCodes($cart),
+            'errorMessage' => $errorMessage,
+        ]);
 
         return new ApplyPromoCodesResult($cart, $errorMessage);
     }
@@ -187,19 +199,6 @@ readonly class CartOperationService
         } catch (CartException|InvalidBasketException $e) {
             throw new InvalidBasketException(sprintf('Failed to add related products: %s', $e->getMessage()));
         }
-    }
-
-    public function removeAllPromoCodes(
-        Cart $cart,
-        SalesChannelContext $context,
-    ): Cart {
-        $promoLineItems = $cart->getLineItems()->filterType(LineItem::PROMOTION_LINE_ITEM_TYPE);
-
-        foreach ($promoLineItems as $lineItem) {
-            $cart = $this->cartService->remove($cart, $lineItem->getId(), $context);
-        }
-
-        return $cart;
     }
 
     private function extractPromotionError(Cart $cart): ?string
@@ -332,14 +331,178 @@ readonly class CartOperationService
         string $code,
     ): Cart {
         $promoLineItems = $cart->getLineItems()->filterType(LineItem::PROMOTION_LINE_ITEM_TYPE);
+        $wanted = $this->foldCode($code);
 
         foreach ($promoLineItems as $lineItem) {
-            if ($lineItem->getReferencedId() === $code) {
-                $cart = $this->cartService->remove($cart, $lineItem->getId(), $context);
-                break;
+            $lineItemCode = $lineItem->getReferencedId();
+
+            if ($lineItemCode !== null && $this->foldCode($lineItemCode) === $wanted) {
+                $this->logger->info('Removing promo code line item', [
+                    'code' => $code,
+                    'lineItemId' => $lineItem->getId(),
+                ]);
+
+                return $this->cartService->remove($cart, $lineItem->getId(), $context);
             }
         }
 
+        // The full code list separates "the app sent something else" from "the code is
+        // already gone".
+        $this->logger->warning('Promo code to remove not found in cart', [
+            'code' => $code,
+            'codesInCart' => $this->cartPromoCodes($cart),
+        ]);
+
         return $cart;
+    }
+
+    /**
+     * The InPost Pay app sends no per-code action: a PROMO_CODES event lists the codes the
+     * basket is supposed to end up with, so a removal reaches us as "here is what is left".
+     * We therefore diff that list against the cart instead of adding every entry in it -
+     * without this, removing a code in the app did nothing at all. BasketService already
+     * treats an empty list as "drop them all", which is this same contract with nothing left.
+     *
+     * @param PromoCodeEventData[] $promoCodes
+     * @param string[]             $errorMessages
+     */
+    private function syncPromoCodes(
+        Cart $cart,
+        SalesChannelContext $context,
+        array $promoCodes,
+        array &$errorMessages,
+    ): Cart {
+        // Keyed by folded code so the comparisons below ignore letter case; the value keeps
+        // the spelling the shopper used, which is what Shopware gets to see.
+        $desired = [];
+        foreach ($promoCodes as $promoEvent) {
+            if ($promoEvent->code === '') {
+                continue;
+            }
+
+            $desired[$this->foldCode($promoEvent->code)] = $promoEvent->code;
+        }
+
+        // Removals first, so the additions below work against the recalculated cart.
+        foreach ($this->cartPromoCodes($cart) as $code) {
+            if (isset($desired[$this->foldCode($code)])) {
+                continue;
+            }
+
+            $cart = $this->removePromoCode($cart, $context, $code);
+        }
+
+        $present = [];
+        foreach ($this->cartPromoCodes($cart) as $code) {
+            $present[$this->foldCode($code)] = true;
+        }
+
+        foreach ($desired as $folded => $code) {
+            if (isset($present[$folded])) {
+                continue;
+            }
+
+            // The app renders our synthetic Omnibus entry as an ordinary chip and echoes it
+            // back as if the shopper had typed it. No Shopware promotion stands behind it,
+            // so adding it would only yield "Promotion with code OMNIBUS not found!". It
+            // stays in $desired above on purpose: a merchant promotion that really is coded
+            // OMNIBUS then still matches the cart and survives the removal pass.
+            if ($folded === $this->foldCode(PromoCode::OMNIBUS)) {
+                continue;
+            }
+
+            $cart = $this->addPromoCodeCollectingErrors($cart, $context, $code, $errorMessages);
+        }
+
+        return $cart;
+    }
+
+    /**
+     * Path for payloads that do carry an explicit action. Nothing we have seen from InPost
+     * uses it, but honouring it keeps a REMOVE from being misread as "the basket should end
+     * up holding exactly this one code".
+     *
+     * @param PromoCodeEventData[] $promoCodes
+     * @param string[]             $errorMessages
+     */
+    private function applyPromoCodeActions(
+        Cart $cart,
+        SalesChannelContext $context,
+        array $promoCodes,
+        array &$errorMessages,
+    ): Cart {
+        foreach ($promoCodes as $promoEvent) {
+            $cart = match ($promoEvent->action) {
+                PromoCodeEventData::ACTION_ADD,
+                PromoCodeEventData::ACTION_UPDATE => $this->addPromoCodeCollectingErrors($cart, $context, $promoEvent->code, $errorMessages),
+                PromoCodeEventData::ACTION_REMOVE => $this->removePromoCode($cart, $context, $promoEvent->code),
+                default => $this->skipUnsupportedAction($cart, $promoEvent),
+            };
+        }
+
+        return $cart;
+    }
+
+    /**
+     * @param string[] $errorMessages
+     */
+    private function addPromoCodeCollectingErrors(
+        Cart $cart,
+        SalesChannelContext $context,
+        string $code,
+        array &$errorMessages,
+    ): Cart {
+        $cart = $this->addPromoCode($cart, $context, $code);
+
+        $error = $this->extractPromotionError($cart);
+        if ($error !== null) {
+            $errorMessages[] = $error;
+        }
+
+        return $cart;
+    }
+
+    private function skipUnsupportedAction(Cart $cart, PromoCodeEventData $promoEvent): Cart
+    {
+        $this->logger->warning('Promo code event with unsupported action - ignored', [
+            'action' => $promoEvent->action,
+            'code' => $promoEvent->code,
+        ]);
+
+        return $cart;
+    }
+
+    /**
+     * Shopware resolves a promotion code regardless of letter case and the app forwards
+     * whatever the shopper typed - the demo log holds "rabat25", "Rabat25" and "RABAT25"
+     * for one and the same promotion. Comparing raw strings would make those look like
+     * different codes and churn the promotion through a needless remove/add.
+     */
+    private function foldCode(string $code): string
+    {
+        return mb_strtolower($code);
+    }
+
+    /**
+     * Codes of the promotions the shopper applied by code; automatic promotions carry none,
+     * so they are left out and the diff never touches them. Returned as a list rather than
+     * as array keys, because PHP would turn a numeric code like "2024" into an int.
+     *
+     * @return string[]
+     */
+    private function cartPromoCodes(Cart $cart): array
+    {
+        $codes = [];
+
+        foreach ($cart->getLineItems()->filterType(LineItem::PROMOTION_LINE_ITEM_TYPE) as $lineItem) {
+            $code = $lineItem->getReferencedId();
+            if ($code === null || $code === '') {
+                continue;
+            }
+
+            $codes[] = $code;
+        }
+
+        return $codes;
     }
 }
