@@ -23,6 +23,13 @@ use function preg_match;
 
 final readonly class IncomingSignatureSubscriber implements EventSubscriberInterface
 {
+    /**
+     * Set on the request once the RSA signature has actually been verified. A header can be
+     * forged, a verified signature cannot, so this is what IncomingRequestLoggerSubscriber
+     * keys the body logging off.
+     */
+    public const ATTRIBUTE_VERIFIED = 'inpost_pay_signature_verified';
+
     private const PROTECTED_PATH_PATTERN = '#^(?:/api/inpost)?/v1/izi/(?:basket/|order)#';
 
     private const REQUIRED_HEADERS = [
@@ -71,6 +78,8 @@ final readonly class IncomingSignatureSubscriber implements EventSubscriberInter
             keyHash: $headers['x-public-key-hash'],
             requestBody: $request->getContent(),
         );
+
+        $request->attributes->set(self::ATTRIBUTE_VERIFIED, true);
 
         $this->logger->debug('Incoming RSA signature verified', [
             'path' => $path,
