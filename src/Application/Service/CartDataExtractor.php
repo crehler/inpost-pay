@@ -210,11 +210,23 @@ readonly class CartDataExtractor
             );
         }
 
+        // Syntetyczny wpis WYŁĄCZNIE dla realnej przeceny produktu (listPrice), nigdy dla
+        // kodu rabatowego. Zmierzone na demo 16.09.2026: bez wpisu z regulation_type OMNIBUS
+        // aplikacja nie pokazuje ani przekreślonej ceny, ani najniższej ceny z 30 dni -
+        // renderuje samo promo_price. Model InPostu zakłada, że obniżka omnibusowa zawsze
+        // wynika z kodu wpisanego przez klienta; w Shopware przecena to atrybut produktu,
+        // więc nie ma czego oznaczyć. Do ustalenia z InPostem - do tego czasu wysyłamy to,
+        // co wyzwala u nich prawidłową prezentację obniżki.
+        //
+        // Oba pola to twardy literał „OMNIBUS", pisownia za dokumentacją InPostu. Aplikacja
+        // renderuje promo_code_value jako chip obok przekreślonej ceny, a chip „RABAT"
+        // sugerował tam kod rabatowy, którego klient nigdzie nie wpisał i którego nie da
+        // się usunąć.
         if ($this->hasOmnibusRelevantDiscount($products)) {
             $promoCodes[] = new PromoCode(
-                name: 'Obniżka cenowa produktu',
-                promoCodeValue: 'RABAT',
-                regulationType: 'OMNIBUS',
+                name: PromoCode::OMNIBUS,
+                promoCodeValue: PromoCode::OMNIBUS,
+                regulationType: PromoCode::OMNIBUS,
             );
         }
 
@@ -226,7 +238,6 @@ readonly class CartDataExtractor
         $productLineItems = $cart->getLineItems()->filterType(LineItem::PRODUCT_LINE_ITEM_TYPE);
         $productIds = array_filter($productLineItems->getReferenceIds());
         $productData = $this->loadProductData($productIds, $context);
-        $lineItemDiscounts = $this->collectLineItemDiscounts($cart);
 
         $products = [];
 
@@ -268,21 +279,18 @@ readonly class CartDataExtractor
             $basePrice = $price;
             $promoPrice = null;
             $listPrice = $calculatedPrice?->getListPrice();
-            $lineItemDiscount = $lineItemDiscounts[$lineItem->getId()] ?? 0.0;
             $hasListPrice = $listPrice !== null && $listPrice->getPrice() > $unitGrossPrice;
 
+            // Only a product-level markdown (listPrice) is reported as a price reduction.
+            // A cart-level voucher must NOT set promo_price/lowest_price: per InPost's
+            // "Przypadek 2" (Changelog 13.06.2024) the app then shows base_price and the
+            // discount belongs in the cart summary (basket_final_price). Folding the
+            // voucher share in here made every coupon look like an Omnibus markdown and
+            // triggered the synthetic OMNIBUS promo code below.
             if ($hasListPrice) {
                 $listGross = $listPrice->getPrice();
                 $basePrice = Money::fromShopwarePrice(net: $listGross * $netRatio, gross: $listGross);
-            }
-
-            if ($hasListPrice || $lineItemDiscount > 0.0) {
-                $discountedUnitGross = $unitGrossPrice;
-                if ($lineItemDiscount > 0.0 && $quantity > 0) {
-                    $discountedUnitGross -= $lineItemDiscount / $quantity;
-                }
-
-                $promoPrice = Money::fromShopwarePrice(net: $discountedUnitGross * $netRatio, gross: $discountedUnitGross);
+                $promoPrice = Money::fromShopwarePrice(net: $unitGrossPrice * $netRatio, gross: $unitGrossPrice);
             }
 
             if ($promoPrice === null) {
@@ -478,40 +486,6 @@ readonly class CartDataExtractor
         }
 
         return false;
-    }
-
-    /**
-     * Shopware represents a cart-wide/scoped promotion as its own line item, not by
-     * modifying each affected product line item's own price - the discount each
-     * product actually receives from a given promotion is recorded in that promotion
-     * line item's own "composition" payload (native Shopware promotion-processing
-     * data, not something this plugin writes). Sum it per affected line item ID so
-     * extractProducts() can fold it into promo_price.
-     *
-     * @return array<string, float> lineItemId => total gross discount
-     */
-    private function collectLineItemDiscounts(Cart $cart): array
-    {
-        $discounts = [];
-
-        $promotionLineItems = $cart->getLineItems()->filterType(LineItem::PROMOTION_LINE_ITEM_TYPE);
-        foreach ($promotionLineItems as $promotionLineItem) {
-            $composition = $promotionLineItem->getPayloadValue('composition');
-            if (!is_array($composition)) {
-                continue;
-            }
-
-            foreach ($composition as $entry) {
-                if (!isset($entry['id'], $entry['discount'])) {
-                    continue;
-                }
-
-                $lineItemId = $entry['id'];
-                $discounts[$lineItemId] = ($discounts[$lineItemId] ?? 0.0) + (float) $entry['discount'];
-            }
-        }
-
-        return $discounts;
     }
 
     /**

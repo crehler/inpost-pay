@@ -29,12 +29,17 @@ readonly class PromoCodeEventData
         #[Assert\Type(type: 'string', message: 'Promo code must be a string')]
         public string $code,
 
-        #[Assert\NotBlank(message: 'Action is required')]
+        /**
+         * Null when the payload carries no action at all, which is what the InPost Pay app
+         * actually sends: a PROMO_CODES event lists the codes the basket should end up with,
+         * leaving the add/remove decision to us. Defaulting this to ADD made every removal
+         * read as "add the codes that are left", so nothing was ever removed.
+         */
         #[Assert\Choice(
             choices: [self::ACTION_ADD, self::ACTION_UPDATE, self::ACTION_REMOVE],
             message: 'Action must be one of: ADD, UPDATE, REMOVE'
         )]
-        public string $action = self::ACTION_ADD,
+        public ?string $action = null,
 
         #[Assert\Type(type: 'string', message: 'Description must be a string')]
         public ?string $description = null,
@@ -49,7 +54,7 @@ readonly class PromoCodeEventData
         try {
             return new self(
                 code: $data['promo_code_value'] ?? $data['code'] ?? '',
-                action: $data['action'] ?? self::ACTION_ADD,
+                action: $data['action'] ?? null,
                 description: $data['name'] ?? $data['description'] ?? null,
                 discountValue: $data['discount_value'] ?? null,
             );
@@ -68,18 +73,4 @@ readonly class PromoCodeEventData
         ];
     }
 
-    public function isAdd(): bool
-    {
-        return $this->action === self::ACTION_ADD;
-    }
-
-    public function isRemove(): bool
-    {
-        return $this->action === self::ACTION_REMOVE;
-    }
-
-    public function isUpdate(): bool
-    {
-        return $this->action === self::ACTION_UPDATE;
-    }
 }

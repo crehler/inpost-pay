@@ -28,13 +28,6 @@ use Symfony\Component\HttpFoundation\{JsonResponse, Request, Response};
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
-use function array_is_list;
-use function get_debug_type;
-use function is_array;
-use function json_decode;
-use function json_last_error;
-use function strlen;
-
 #[Route(defaults: [PlatformRequest::ATTRIBUTE_ROUTE_SCOPE => [ApiRouteScope::ID]])]
 final class InpostController extends AbstractController
 {
@@ -236,11 +229,7 @@ final class InpostController extends AbstractController
     public function createOrder(
         Request $request,
     ): JsonResponse {
-        $rawBody = $request->getContent();
-        $this->logger->debug('Received order creation request from InPost', [
-            'payload_size' => strlen($rawBody),
-            'raw_body' => $this->decodeForLog($rawBody),
-        ]);
+        $this->logger->debug('Received order creation request from InPost');
 
         try {
             $data = $this->deserializer->decodeRequest($request);
@@ -450,30 +439,5 @@ final class InpostController extends AbstractController
             'endpoint' => $endpoint,
             'payload' => $payload,
         ]);
-    }
-
-    /**
-     * Decodes a raw JSON request body into an array so the logger's PII redaction can walk
-     * it; returns only a JSON error marker when the body isn't valid JSON, and only a type
-     * marker when it decodes to a scalar or list (the redactor can't mask those safely).
-     */
-    private function decodeForLog(string $rawBody): mixed
-    {
-        if ($rawBody === '') {
-            return '';
-        }
-
-        $decoded = json_decode($rawBody, true);
-        $jsonError = json_last_error();
-
-        if ($jsonError !== JSON_ERROR_NONE) {
-            return ['invalid_json' => true, 'json_error' => $jsonError];
-        }
-
-        if (!is_array($decoded) || array_is_list($decoded)) {
-            return ['payload_type' => get_debug_type($decoded)];
-        }
-
-        return $decoded;
     }
 }
