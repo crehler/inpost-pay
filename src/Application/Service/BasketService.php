@@ -168,18 +168,18 @@ readonly class BasketService
                     $dto->eventData
                 );
             } elseif ($dto->eventType->isPromoCode()) {
-                // Empty eventData means "remove all promo codes"
-                if (empty($dto->eventData)) {
-                    $cart = $this->cartOperationService->removeAllPromoCodes($cart, $context);
-                } else {
-                    $result = $this->cartOperationService->applyPromoCodes(
-                        $cart,
-                        $context,
-                        $dto->eventData
-                    );
-                    $cart = $result->cart;
-                    $promoErrorMessage = $result->errorMessage;
-                }
+                // An empty list is not a special case: it is the same "here are the codes the
+                // basket should end up with" contract with nothing left on it. Going through
+                // applyPromoCodes() keeps automatic promotions out of it - they carry no code,
+                // the shopper never applied them, and wiping them along with the last coupon
+                // made promotions look broken.
+                $result = $this->cartOperationService->applyPromoCodes(
+                    $cart,
+                    $context,
+                    $dto->eventData
+                );
+                $cart = $result->cart;
+                $promoErrorMessage = $result->errorMessage;
             } elseif ($dto->eventType->isRelatedProduct() && !empty($dto->eventData)) {
                 $cart = $this->cartOperationService->addRelatedProducts(
                     $cart,
