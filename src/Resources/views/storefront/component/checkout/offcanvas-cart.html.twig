@@ -11,7 +11,7 @@
 
     {% set displayConfig = inpostPayConfig ? inpostPayConfig.getDisplayConfig('MINICART_PAGE') : null %}
 
-    {% if inpostPayConfig and displayConfig and displayConfig.displayed %}
+    {% if isCartNotEmpty and inpostPayConfig and displayConfig and displayConfig.displayed %}
         <div class="inpost-pay-widget-container offcanvas-cart-inpost mt-3"
              style="{{ displayConfig.getHtmlStyles().toCssString() }}">
             <inpost-izi-button
