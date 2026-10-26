@@ -72,5 +72,4 @@ readonly class PromoCodeEventData
             'discount_value' => $this->discountValue,
         ];
     }
-
 }

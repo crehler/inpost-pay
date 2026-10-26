@@ -347,23 +347,13 @@ export default class InpostPayPlugin extends Plugin {
     }
 
     /**
-     * Update cart badge counter in header
+     * Refresh header cart widget(s) after the product was added to cart
+     * Uses the same mechanism as Shopware's AddToCart and OffCanvasCart plugins
      * @param {number} count - New cart item count
      * @private
      */
     _updateCartBadge(count) {
-        // Find cart badge element(s)
-        const badges = document.querySelectorAll('.header-cart-count, .cart-widget .badge');
-
-        badges.forEach(badge => {
-            badge.textContent = count;
-
-            // Add pulse animation for visual feedback
-            badge.classList.add('animate-pulse');
-            setTimeout(() => {
-                badge.classList.remove('animate-pulse');
-            }, 1000);
-        });
+        window.PluginManager.getPluginInstances('CartWidget')?.forEach(instance => instance.fetch());
 
         // Publish event for other plugins that might listen
         this.$emitter.publish('inpostPayCartUpdated', { count });
